@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         @endif
 
-        <form method="POST" action="{{ url('/login') }}" autocomplete="off">
+        <form method="POST" action="{{ route('register') }}" autocomplete="off">
             @csrf
             <button type="button" class="google-btn" onclick="alert('Fitur Google belum tersedia')">
                 <img src="/assets/google.png" alt="google">
