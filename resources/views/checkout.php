@@ -8,7 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .checkout-container {
-            background: #f8f9fa;
+            background: #fff0f5;
             min-height: 100vh;
             padding: 2rem 0;
         }
@@ -48,7 +48,7 @@
         }
         
         .summary-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f5459dff 0%, #f8a9c2 100%);
             color: white;
             border-radius: 12px;
         }
@@ -73,7 +73,7 @@
         }
         
         .alert-info {
-            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            background: linear-gradient(135deg, #f8a9c2 0%, #f5459dff 100%);
             border: none;
             color: white;
         }

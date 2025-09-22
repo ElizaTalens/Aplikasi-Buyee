@@ -8,15 +8,15 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
+            --primary-color: #f8a9c2;
+            --secondary-color: #f5459dff;
             --success-color: #28a745;
             --warning-color: #ffc107;
             --danger-color: #dc3545;
         }
 
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #ffe4edff 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
@@ -155,7 +155,7 @@
         }
 
         .result-info {
-            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            background: linear-gradient(135deg, #f8a9c2 0%, #f5459dff 100%);
             color: white;
             border-radius: 10px;
             padding: 1rem;
