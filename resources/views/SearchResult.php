@@ -695,4 +695,268 @@
             };
             
             // Check if product already exists in cart
-            const existingIndex = cart.findIndex(item => item.
+            const existingIndex = cart.findIndex(item => item.id === productId);
+            
+            if (existingIndex !== -1) {
+                cart[existingIndex].quantity += 1;
+                showNotification(`${productName} ditambahkan lagi ke keranjang!`, 'success');} else {
+                cart.push(product);
+                showNotification(`${productName} berhasil ditambahkan ke keranjang!`, 'success');
+            }
+            
+            // Update cart in localStorage
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartBadge();
+            
+            // Add animation effect
+            const button = event.target;
+            button.innerHTML = '<i class="fas fa-check me-2"></i>Ditambahkan!';
+            button.classList.add('btn-success');
+            
+            setTimeout(() => {
+                button.innerHTML = '<i class="fas fa-cart-plus me-2"></i>Tambah ke Keranjang';
+                button.classList.remove('btn-success');
+            }, 2000);
+        }
+        
+        // Update cart badge
+        function updateCartBadge() {
+            const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+            const badge = document.querySelector('.navbar .badge');
+            if (badge) {
+                badge.textContent = totalItems;
+            }
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifs = document.querySelectorAll('.custom-notification');
+            existingNotifs.forEach(notif => notif.remove());
+            
+            // Create notification
+            const notification = document.createElement('div');
+            notification.className = `custom-notification alert alert-${type} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-triangle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+        
+        // Show loading
+        function showLoading() {
+            const container = document.getElementById('productsContainer');
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="mt-3">
+                        <h5>Mencari produk...</h5>
+                        <p class="text-muted">Mohon tunggu sebentar</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Hide loading and restore products
+        function hideLoading() {
+            const container = document.getElementById('productsContainer');
+            // This would normally load from server, but for demo we'll restore the original products
+            location.reload(); // Simple reload for demo
+        }
+        
+        // Update search results
+        function updateSearchResults(query) {
+            const resultInfo = document.querySelector('.result-info');
+            resultInfo.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-search me-2"></i>
+                        <strong>Hasil pencarian untuk: "${query}"</strong>
+                        <br><small>Ditemukan ${Math.floor(Math.random() * 20) + 5} produk dari 78 total produk</small>
+                    </div>
+                    <div>
+                        <span class="badge bg-light text-dark">Page 1 of ${Math.ceil(Math.random() * 3) + 1}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Update result info
+        function updateResultInfo(count) {
+            const resultInfo = document.querySelector('.result-info small');
+            if (resultInfo) {
+                resultInfo.textContent = `Ditemukan ${count} produk dari 78 total produk`;
+            }
+        }
+        
+        // Load page (pagination)
+        function loadPage(page) {
+            showLoading();
+            
+            // Simulate loading delay
+            setTimeout(() => {
+                // Update pagination
+                document.querySelectorAll('.page-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Mark current page as active
+                const pageItems = document.querySelectorAll('.page-link');
+                pageItems.forEach(link => {
+                    if (link.textContent == page) {
+                        link.closest('.page-item').classList.add('active');
+                    }
+                });
+                
+                hideLoading();
+                showNotification(`Halaman ${page} dimuat!`, 'info');
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 1000);
+        }
+        
+        // Category filter
+        document.querySelectorAll('.category-filter input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                filterByCategory();
+            });
+        });
+        
+        function filterByCategory() {
+            const checkedCategories = Array.from(document.querySelectorAll('.category-filter input:checked'))
+                .map(cb => cb.value);
+            
+            const products = document.querySelectorAll('.product-item');
+            let visibleCount = 0;
+            
+            products.forEach(product => {
+                const category = product.dataset.category;
+                if (checkedCategories.length === 0 || checkedCategories.includes(category)) {
+                    product.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    product.style.display = 'none';
+                }
+            });
+            
+            updateResultInfo(visibleCount);
+            
+            if (visibleCount === 0) {
+                showNoResults();
+            } else {
+                hideNoResults();
+            }
+        }
+        
+        // Show no results
+        function showNoResults() {
+            const container = document.getElementById('productsContainer');
+            if (!document.getElementById('noResults')) {
+                const noResults = document.createElement('div');
+                noResults.id = 'noResults';
+                noResults.className = 'col-12';
+                noResults.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-search-minus"></i>
+                        <h4>Tidak ada produk ditemukan</h4>
+                        <p class="text-muted">Coba ubah filter atau kata kunci pencarian Anda</p>
+                        <button class="btn btn-primary" onclick="clearAllFilters()">
+                            <i class="fas fa-redo me-2"></i>Reset Filter
+                        </button>
+                    </div>
+                `;
+                container.appendChild(noResults);
+            }
+        }
+        
+        // Hide no results
+        function hideNoResults() {
+            const noResults = document.getElementById('noResults');
+            if (noResults) {
+                noResults.remove();
+            }
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartBadge();
+            
+            // Add some interactive effects
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-10px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+            
+            // Smooth scroll for navigation
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Alt + S for search focus
+            if (e.altKey && e.key === 's') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+            
+            // Alt + C for cart
+            if (e.altKey && e.key === 'c') {
+                e.preventDefault();
+                window.location.href = 'cart.php';
+            }
+        });
+        
+        // Auto-save search history (simple implementation)
+        function saveSearchHistory(query) {
+            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+            if (!history.includes(query)) {
+                history.unshift(query);
+                if (history.length > 10) {
+                    history = history.slice(0, 10);
+                }
+                localStorage.setItem('searchHistory', JSON.stringify(history));
+            }
+        }
+        
+        // Show search suggestions (you can expand this)
+        document.getElementById('searchInput').addEventListener('focus', function() {
+            // This could show search history or popular searches
+            // For now, just add placeholder functionality
+            this.placeholder = 'Coba: sepatu, tas, elektronik...';
+        });
+        
+        document.getElementById('searchInput').addEventListener('blur', function() {
+            this.placeholder = 'Cari produk atau kategori...';
+        });
+    </script>
+</body>
+</html>
