@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -8,7 +9,19 @@ class Product extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'category_id', 'price', 'stock', 'is_active'];
+    // Hapus baris ini jika kamu memang pakai konvensi default "products"
+    protected $table = 'products';
+
+    // Gabungan field dari kedua versi (silakan sesuaikan dengan kolom database-mu)
+    protected $fillable = [
+        'name',
+        'category_id',
+        'price',
+        'stock',
+        'is_active',
+        'image_url',
+        'slug',
+    ];
 
     public function category()
     {
