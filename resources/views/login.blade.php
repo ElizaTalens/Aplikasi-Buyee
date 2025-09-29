@@ -1,32 +1,4 @@
-<?php
-session_start();
-$error = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $input = $_POST['email'];
-    $password = $_POST['password'];
 
-    // Koneksi ke database
-    $conn = new mysqli('127.0.0.1:8000', 'root', '', 'buyee_web');
-    if ($conn->connect_error) {
-        die("Koneksi gagal: " . $conn->connect_error);
-    }
-
-    // Cari user berdasarkan email atau no_hp
-    $stmt = $conn->prepare("SELECT * FROM users WHERE email = ? OR no_hp = ? LIMIT 1");
-    $stmt->bind_param("ss", $input, $input);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-
-    if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user_id'] = $user['id'];
-        header("Location: dashboard.php");
-        exit;
-    } else {
-        $error = "Email/No.Hp atau password salah!";
-    }
-}
-?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -50,13 +22,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             cursor: pointer;
         }
         .google-btn img { width: 40px; }
-        .or { margin: 10px 0; color: #aaa; }
-        input[type="text"], input[type="password"] {
+        .or {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #aaa;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        .or::before, .or::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #aaa;
+            margin: 0 20px;
+        }
+        input[type="text"], input[type="password"], select {
             width: 100%; padding: 8px; /* samain dengan google-btn */
             border: 1px solid #bbb; border-radius: 6px; font-size: 1em;
             box-sizing: border-box; display: flex; align-items: center;
             margin-bottom: 12px;
             font-family: 'Inter', sans-serif;
+        }
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: #f27ca5; 
+            outline: none; 
+            box-shadow: 0 0 8px rgba(242,124,165,0.6);
+        }
+        select {
+            appearance: none; -webkit-appearance: none; -moz-appearance: none;
+            background: #fff url("data:image/svg+xml;utf8,<svg fill='%23666' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>") no-repeat right 10px center;
+            background-size: 16px 16px; padding-right: 35px;
+            border-color: #f27ca5; 
+            outline: none; 
+            box-shadow: 0 0 8px rgba(242,124,165,0.6);
         }
         .remember { float: left; margin: 10px 0 20px 0; font-size: 0.9em; }
         .login-btn {
@@ -65,7 +63,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 1.1em; font-weight: bold; cursor: pointer;
             margin-top: 10px;
         }
-        .register-link { color: #f8a9c2; text-decoration: none; }
+        .login-btn:hover { 
+            background: #f27ca5; 
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .register-link { 
+            color: #f8a9c2; 
+            text-decoration: none; 
+            transition: all 0.3s ease;
+        }
+        .register-link:hover {
+            color: #f27ca5; 
+            text-decoration: underline; 
+        }
         .forgot { display: block; margin: 15px 0 0 0; color: #888; font-size: 0.95em; }
         .terms { color: #888; font-size: 0.85em; margin-top: 20px; }
         .error { color: #e74c3c; margin-bottom: 10px; }
@@ -94,6 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="or">atau</div>
             <input type="text" name="email" placeholder="Email/No.Hp" required>
             <input type="password" name="password" placeholder="Password" required>
+            <select name="role" required>
+                <option value="" disabled selected>Pilih Role</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+            </select>
             <div class="remember">
                 <input type="checkbox" name="remember" id="remember">
                 <label for="remember">ingat saya</label>

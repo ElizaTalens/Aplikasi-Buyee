@@ -23,9 +23,10 @@ class RegisterController extends Controller
 
         // simpan ke database
         User::create([
-            'name' => $request->name ?? 'User', // kalau ada kolom name
+            'name' => $request->name, // kalau ada kolom name
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => 'user', // set role default ke 'user'
         ]);
 
         // redirect setelah sukses

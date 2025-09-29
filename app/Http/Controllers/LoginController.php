@@ -20,20 +20,28 @@ class LoginController extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required|min:6',
+            'role' => 'required|in:admin,user', 
         ]);
 
         // cari user berdasarkan email
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)
+            ->where('role', $request->role)
+            ->first();
 
         // cek user & password
         if ($user && Hash::check($request->password, $user->password)) {
             Auth::login($user);
-            return redirect('/dashboard'); // arahkan ke dashboard
+        
+            if ($user->role === 'admin') {
+                return redirect('/buyee_admin_dashboard');
+            } elseif ($user->role === 'user') {
+                return redirect('/buyee_user_dashboard'); // arahkan ke dashboard user
+            }
         }
 
         // kalau gagal
         return back()->withErrors([
-            'email' => 'Email atau password salah',
+            'email' => 'Email atau password, atu role salah',
         ]);
     }
 
