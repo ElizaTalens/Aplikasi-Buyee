@@ -339,7 +339,7 @@ body {
                                 </tr>
                             </thead>
                             <tbody id="dashboard-orders-table-body">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -348,11 +348,8 @@ body {
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div class="d-flex align-items-center">
                         <input type="search" class="form-control me-2" placeholder="Cari produk..." style="width: 300px;">
-                        <select class="form-select" style="width: 150px;">
-                            <option>Semua Kategori</option>
-                            <option>Elektronik</option>
-                            <option>Pakaian</option>
-                            <option>Makanan</option>
+                        <select class="form-select" style="width: 150px;" id="productFilterCategory">
+                            <option value="">Semua Kategori</option>
                         </select>
                     </div>
                     <button class="btn btn-primary btn-custom" data-bs-toggle="modal" data-bs-target="#productModal" onclick="openProductModal()">
@@ -365,6 +362,7 @@ body {
                             <thead class="bg-light">
                                 <tr>
                                     <th>ID</th>
+                                    <th>Foto</th>
                                     <th>Nama Produk</th>
                                     <th>Kategori</th>
                                     <th>Harga</th>
@@ -374,7 +372,7 @@ body {
                                 </tr>
                             </thead>
                             <tbody id="products-table-body">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -407,7 +405,7 @@ body {
                                 </tr>
                             </thead>
                             <tbody id="orders-table-body">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -434,7 +432,7 @@ body {
                                 </tr>
                             </thead>
                             <tbody id="categories-table-body">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -450,7 +448,7 @@ body {
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="productForm">
+                <form id="productForm" enctype="multipart/form-data">
                     <div class="row">
                         <input type="hidden" id="product-id" name="id">
                         <div class="col-md-6 mb-3">
@@ -461,7 +459,7 @@ body {
                             <label class="form-label">Kategori</label>
                             <select class="form-select" id="productCategory" name="category_id" required>
                                 <option value="">Pilih Kategori</option>
-                                </select>
+                            </select>
                         </div>
                     </div>
                     <div class="row">
@@ -473,6 +471,12 @@ body {
                             <label class="form-label">Stok</label>
                             <input type="number" class="form-control" id="productStock" name="stock" required>
                         </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Foto Produk (Max 2MB)</label>
+                        <input type="file" class="form-control" id="productImageFile" name="image_file">
+                        <small class="text-muted mt-2">Kosongkan jika tidak ingin mengubah foto.</small>
+                        <div id="image-preview" class="mt-2"></div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Status</label>
@@ -589,7 +593,10 @@ function showSection(section) {
     };
     document.getElementById('page-title').textContent = titles[section];
     if (section === 'dashboard') loadDashboardStats();
-    if (section === 'products') loadProducts();
+    if (section === 'products') {
+        loadProducts(); // Panggil tanpa filter awal
+        loadCategoriesForProductSection(); // Memuat kategori untuk dropdown filter
+    }
     if (section === 'orders') loadOrders();
     if (section === 'categories') loadCategories();
 }
@@ -607,18 +614,75 @@ async function loadDashboardStats() {
     }
 }
 
-async function loadProducts() {
+// ** FUNGSI UNTUK MENGISI DROPDOWN FILTER KATEGORI **
+async function loadCategoriesForProductSection() {
     try {
-        const response = await fetch('/buyee-admin/products');
+        const response = await fetch('/buyee-admin/categories');
+        const categories = await response.json();
+        const select = document.querySelector('#productFilterCategory');
+        
+        select.innerHTML = ''; // Kosongkan
+        select.innerHTML += '<option value="">Semua Kategori</option>'; // Default option
+        
+        categories.forEach(c => select.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+        
+    } catch (error) {
+        console.error('Gagal memuat kategori untuk filter:', error);
+    }
+}
+
+
+// ** FUNGSI UTAMA: LOAD PRODUK DENGAN FILTER **
+async function loadProducts(query = '', categoryId = '') {
+    try {
+        // Bangun URL dengan parameter filter
+        let url = '/buyee-admin/products';
+        const params = [];
+        
+        if (query) {
+            params.push(`query=${encodeURIComponent(query)}`);
+        }
+        if (categoryId) {
+            params.push(`category_id=${categoryId}`);
+        }
+        
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+
+        const response = await fetch(url);
         const products = await response.json();
         const tbody = document.querySelector('#products-table-body');
         tbody.innerHTML = '';
+        
+        if (products.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">Tidak ada produk ditemukan.</td></tr>`;
+            return;
+        }
+
         products.forEach(p => {
             const statusText = p.stock > 0 && p.is_active ? 'Aktif' : 'Habis/Nonaktif';
             const statusBadgeClass = p.stock > 0 && p.is_active ? 'bg-success' : 'bg-danger';
+            
+            // Logika Image: Menggunakan path relatif database
+            const imageUrl = p.image 
+                ? `/${p.image}` // Akses dari root public: /uploads/products/namafile.jpg
+                : 'https://via.placeholder.com/50x50?text=No+Img';
+            
+            const imageCell = `
+                <td>
+                    <img 
+                        src="${imageUrl}" 
+                        alt="${p.name}" 
+                        style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;"
+                        onerror="this.onerror=null;this.src='https://via.placeholder.com/50x50?text=No+Img';"
+                    >
+                </td>`;
+
             tbody.innerHTML += `
                 <tr>
                     <td>${String(p.id).padStart(3, '0')}</td>
+                    ${imageCell}
                     <td>${p.name}</td>
                     <td>${p.category ? p.category.name : 'N/A'}</td>
                     <td>${formatCurrency(p.price)}</td>
@@ -635,11 +699,54 @@ async function loadProducts() {
     }
 }
 
+
+// ** FUNGSI UNTUK MENYARING (SEARCH & FILTER) **
+function filterProducts() {
+    const query = document.querySelector('#products-section input[type="search"]').value;
+    const categoryId = document.querySelector('#products-section .form-select').value;
+    
+    // Panggil loadProducts dengan filter baru
+    loadProducts(query, categoryId); 
+}
+
+// ** FUNGSI EDIT PRODUCT (Preview Gambar) **
+async function editProduct(id) {
+    currentProductId = id;
+    document.getElementById('productModalTitle').textContent = 'Edit Produk';
+    document.getElementById('productImageFile').value = ''; 
+    document.getElementById('image-preview').innerHTML = '';
+    await loadCategoriesForProductModal();
+
+    try {
+        const response = await fetch(`/buyee-admin/products/${id}`);
+        const data = await response.json();
+        
+        document.getElementById('productName').value = data.name;
+        document.getElementById('productCategory').value = data.category_id;
+        document.getElementById('productPrice').value = data.price;
+        document.getElementById('productStock').value = data.stock;
+        document.getElementById('productStatus').value = data.is_active;
+
+        const previewDiv = document.getElementById('image-preview');
+        if (data.image) {
+            const imageUrl = `/${data.image}`; // Path dari root public
+            previewDiv.innerHTML = `<img src="${imageUrl}" style="max-width: 150px; border-radius: 8px; margin-top: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" alt="Foto Produk Saat Ini">`;
+        }
+    } catch (error) {
+        console.error('Gagal mengambil data produk:', error);
+    }
+    const productModal = new bootstrap.Modal(document.getElementById('productModal'));
+    productModal.show();
+}
+
 async function openProductModal() {
     currentProductId = null;
     document.getElementById('productModalTitle').textContent = 'Tambah Produk';
     document.getElementById('productForm').reset();
+    document.getElementById('image-preview').innerHTML = ''; // Hapus preview
     await loadCategoriesForProductModal();
+    const productModal = new bootstrap.Modal(document.getElementById('productModal'));
+    productModal.show();
 }
 
 async function loadCategoriesForProductModal() {
@@ -654,45 +761,27 @@ async function loadCategoriesForProductModal() {
     }
 }
 
-async function editProduct(id) {
-    currentProductId = id;
-    document.getElementById('productModalTitle').textContent = 'Edit Produk';
-    await loadCategoriesForProductModal();
-    try {
-        const response = await fetch(`/buyee-admin/products/${id}`);
-        const data = await response.json();
-        document.getElementById('productName').value = data.name;
-        document.getElementById('productCategory').value = data.category_id;
-        document.getElementById('productPrice').value = data.price;
-        document.getElementById('productStock').value = data.stock;
-        document.getElementById('productStatus').value = data.is_active;
-    } catch (error) {
-        console.error('Gagal mengambil data produk:', error);
-    }
-    const productModal = new bootstrap.Modal(document.getElementById('productModal'));
-    productModal.show();
-}
-
 async function saveProduct() {
     const form = document.getElementById('productForm');
     if (!form.checkValidity()) {
         form.reportValidity();
         return;
     }
-    const productData = {
-        id: currentProductId,
-        name: document.getElementById('productName').value,
-        category_id: document.getElementById('productCategory').value,
-        price: document.getElementById('productPrice').value,
-        stock: document.getElementById('productStock').value,
-        is_active: document.getElementById('productStatus').value
-    };
+    const formData = new FormData(form);
+    
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+    formData.append('id', currentProductId || '');
+
+    if (currentProductId && !document.getElementById('productImageFile').files.length) {
+        formData.delete('image_file');
+    }
+
     try {
         const response = await fetch('/buyee-admin/products/save', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
-            body: JSON.stringify(productData)
+            body: formData 
         });
+        
         const result = await response.json();
         alert(result.message);
         if (response.ok) {
@@ -890,9 +979,22 @@ function logout() {
     }
 }
 
+// ** Event Listeners untuk Search dan Filter **
 document.addEventListener('DOMContentLoaded', function() {
     showSection('dashboard');
+    
+    // Attach event listeners for search and filter only once
+    const searchInput = document.querySelector('#products-section input[type="search"]');
+    const categorySelect = document.querySelector('#productFilterCategory');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', filterProducts);
+    }
+    if (categorySelect) {
+        categorySelect.addEventListener('change', filterProducts);
+    }
 });
+
 </script>
 
 </body>

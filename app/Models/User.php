@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+USE App\Models\Store;
 
 class User extends Authenticatable
 {
@@ -81,10 +82,11 @@ class User extends Authenticatable
     // {
     //     return $this->hasMany(WishlistItem::class);
     // }
-    // public function favoriteStores()
-    // {
-    //     return $this->belongsToMany(Store::class, 'user_favorite_stores');
-    // }
+    public function favoriteStores()
+    {
+        // Assuming you have a pivot table 'favorite_store_user' with 'user_id' and 'store_id'
+        return $this->belongsToMany(Store::class, 'favorite_store_user', 'user_id', 'store_id');
+    }
     // public function settings()
     // {
     //     return $this->hasOne(UserSetting::class);

@@ -5,13 +5,18 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CatalogController;
 
 
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// -------------------------------------------------------------------------
+// Rute Publik
+// -------------------------------------------------------------------------
 
+// Home - Rute utama Anda
+Route::get('/', [HomeController::class, 'index'])->name('home');
 // login
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login.form');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
@@ -23,11 +28,11 @@ Route::post('/register', [RegisterController::class, 'register'])->name('registe
 // admin
 Route:: get ('/buyee_admin_dashboard', function () {
     return view('buyee_admin_dashboard');
-})->middleware('auth');
+})->middleware('auth')->name('admin.dashboard');
 
 // user
-Route::get('/buyee_user_dashboard', function () {
-    return view('buyee_user_dashboard');
+Route::get('/user/home', function () {
+    return redirect()->route('home');
 })->name('user.dashboard')->middleware('auth');
 
 // checkout
@@ -44,8 +49,8 @@ Route:: get ('/SearchResult', function () {
 Route::middleware(['auth'])->group(function () {
     
     // Main profile page
-    Route::get('/user_profil', [ProfileController::class, 'index'])->name('user_profil.blade.php');
-    
+    Route::get('/user_profil', [ProfileController::class, 'index'])->name('user_profil')->middleware('auth');
+
     // Biodata management
     Route::get('/profile/biodata/edit', [ProfileController::class, 'editBiodata'])->name('profile.biodata.edit');
     Route::put('/profile/biodata', [ProfileController::class, 'updateBiodata'])->name('profile.biodata.update');
@@ -64,13 +69,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile/payment-methods', [ProfileController::class, 'paymentMethods'])->name('profile.payment-methods');
     
     // Transaction history
-    Route::get('/profile/transactions', [ProfileController::class, 'transactions'])->name('profile.transactions');
+    Route::get('/profile/transactions', [ProfileController::class, 'transactions'])->name('transactions');
     
     // Notifications
     Route::get('/profile/notifications', [ProfileController::class, 'notifications'])->name('profile.notifications');
     
     // Wishlist
-    Route::get('/profile/wishlist', [ProfileController::class, 'wishlist'])->name('profile.wishlist');
+    Route::get('/profile/wishlist', [ProfileController::class, 'wishlist'])->name('wishlist');
     
     // Favorite stores
     Route::get('/profile/favorite-stores', [ProfileController::class, 'favoriteStores'])->name('profile.favorite-stores');
@@ -108,7 +113,9 @@ Route::prefix('buyee-admin')->group(function () {
     Route::get('/orders', [AdminController::class, 'getOrders']);
     Route::post('/orders/update-status', [AdminController::class, 'updateOrderStatus']);
 });
-Route::get('/logout', function () {
-    // auth()->logout(); // Mengakhiri sesi pengguna
-    return redirect('/login'); // Mengarahkan kembali ke halaman login
-})->name('logout');
+Route::get('/cart', [CartController::class, 'index'])->name('cart');
+Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('/product/{id}', [CatalogController::class, 'show'])->name('product.detail');
+
+

@@ -35,7 +35,7 @@ class LoginController extends Controller
             if ($user->role === 'admin') {
                 return redirect('/buyee_admin_dashboard');
             } elseif ($user->role === 'user') {
-                return redirect('/buyee_user_dashboard'); // arahkan ke dashboard user
+                return redirect()->route('home'); // arahkan ke dashboard user
             }
         }
 
@@ -48,6 +48,7 @@ class LoginController extends Controller
     public function logout()
     {
         Auth::logout();
-        return redirect('/login');
+        // Mengarahkan ke halaman utama (rute '/') yang dinamai 'home'
+        return redirect()->route('home'); 
     }
 }
