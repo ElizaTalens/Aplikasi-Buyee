@@ -77,12 +77,20 @@
             border: none;
             color: white;
         }
+
+        .modal-header {
+            background: linear-gradient(135deg, #f5459dff 0%, #f8a9c2 100%);
+            color: white;
+        }
+
+        .modal-header .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
     </style>
 </head>
 <body>
     <div class="checkout-container">
         <div class="container">
-            <!-- Header -->
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="d-flex align-items-center mb-3">
@@ -102,12 +110,10 @@
             </div>
 
             <div class="row">
-                <!-- Form Checkout -->
                 <div class="col-lg-8">
                     <div class="card checkout-card mb-4">
                         <div class="card-body p-4">
                             <form id="checkoutForm" method="POST" action="process_checkout.php">
-                                <!-- Data Pelanggan -->
                                 <h5 class="section-header">
                                     <i class="fas fa-user text-primary me-2"></i>
                                     Data Pelanggan
@@ -134,7 +140,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Alamat Pengiriman -->
                                 <h5 class="section-header">
                                     <i class="fas fa-map-marker-alt text-success me-2"></i>
                                     Alamat Pengiriman
@@ -170,7 +175,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Metode Pembayaran -->
                                 <h5 class="section-header">
                                     <i class="fas fa-money-check text-warning me-2"></i>
                                     Metode Pembayaran
@@ -201,7 +205,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Catatan -->
                                 <h5 class="section-header">
                                     <i class="fas fa-sticky-note text-info me-2"></i>
                                     Catatan Pesanan
@@ -216,7 +219,6 @@
                     </div>
                 </div>
 
-                <!-- Ringkasan Pesanan -->
                 <div class="col-lg-4">
                     <div class="card checkout-card">
                         <div class="card-body summary-card p-4">
@@ -225,7 +227,6 @@
                                 Ringkasan Pesanan
                             </h5>
                             
-                            <!-- Items -->
                             <div class="cart-items mb-4">
                                 <div class="cart-item bg-white text-dark">
                                     <div class="d-flex align-items-center">
@@ -260,7 +261,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Total -->
                             <div class="border-top border-light pt-3">
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>Subtotal:</span>
@@ -273,7 +273,7 @@
                                 <hr class="border-light">
                                 <div class="d-flex justify-content-between mb-4">
                                     <strong class="h5">Total:</strong>
-                                    <strong class="h5">Rp 415.000</strong>
+                                    <strong class="h5 total-amount">Rp 415.000</strong>
                                 </div>
                                 
                                 <button type="submit" form="checkoutForm" class="btn btn-checkout btn-success w-100 btn-lg">
@@ -295,100 +295,173 @@
         </div>
     </div>
 
+    <div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transferModalLabel"><i class="fas fa-hourglass-half me-2"></i>Status Pembayaran</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-check-circle text-success fa-3x"></i>
+                        <h5 class="mt-2">Pesanan Berhasil Dibuat!</h5>
+                    </div>
+                    <p class="text-center">Silakan selesaikan pembayaran Anda untuk melanjutkan.</p>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Nomor Pesanan:
+                            <strong id="transferOrderId"></strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Total Pembayaran:
+                            <strong id="transferTotalAmount" class="text-danger"></strong>
+                        </li>
+                         <li class="list-group-item">
+                            <strong>Informasi Transfer:</strong><br>
+                            <small>Bank BCA: <strong>1234567890</strong><br>
+                            A.n: <strong>UMKM Mini-Commerce</strong></small>
+                        </li>
+                    </ul>
+                     <p class="text-muted text-center mt-3 small">Pesanan akan diproses setelah pembayaran dikonfirmasi.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">Saya Mengerti</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="codSuccessModal" tabindex="-1" aria-labelledby="codSuccessModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="codSuccessModalLabel"><i class="fas fa-box-check me-2"></i>Pesanan Berhasil Dibuat</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="fas fa-truck-fast text-success fa-3x mb-3"></i>
+                    <h5>Terima Kasih!</h5>
+                    <p>Pesanan Anda dengan metode <strong>Cash on Delivery (COD)</strong> telah kami terima dan akan segera kami proses. Mohon siapkan pembayaran tunai saat kurir tiba.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Form validation
-        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkoutForm = document.getElementById('checkoutForm');
             
-            // Basic validation
-            const requiredFields = this.querySelectorAll('[required]');
-            let isValid = true;
-            
-            requiredFields.forEach(field => {
-                if (!field.value.trim()) {
-                    field.classList.add('is-invalid');
-                    isValid = false;
-                } else {
-                    field.classList.remove('is-invalid');
-                }
-            });
-            
-            // Phone validation
-            const phone = document.querySelector('[name="customer_phone"]');
-            const phoneRegex = /^08[0-9]{8,11}$/;
-            if (!phoneRegex.test(phone.value)) {
-                phone.classList.add('is-invalid');
-                isValid = false;
-            }
-            
-            // Postal code validation
-            const postalCode = document.querySelector('[name="postal_code"]');
-            const postalRegex = /^[0-9]{5}$/;
-            if (!postalRegex.test(postalCode.value)) {
-                postalCode.classList.add('is-invalid');
-                isValid = false;
-            }
-            
-            if (isValid) {
-                // Show loading state
-                const submitBtn = this.querySelector('[type="submit"]');
-                const originalText = submitBtn.innerHTML;
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
+            // --- Form Submission Handler ---
+            checkoutForm.addEventListener('submit', function(e) {
+                e.preventDefault();
                 
-                // Simulate processing
-                setTimeout(() => {
-                    alert('Pesanan berhasil dibuat!\n\nPesanan Anda sedang diproses. Anda akan menerima konfirmasi melalui email.');
+                // Basic validation
+                const requiredFields = this.querySelectorAll('[required]');
+                let isValid = true;
+                
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        field.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+                
+                // Phone validation
+                const phone = document.querySelector('[name="customer_phone"]');
+                const phoneRegex = /^08[0-9]{8,11}$/;
+                if (phone.value && !phoneRegex.test(phone.value)) {
+                    phone.classList.add('is-invalid');
+                    isValid = false;
+                }
+                
+                // Postal code validation
+                const postalCode = document.querySelector('[name="postal_code"]');
+                const postalRegex = /^[0-9]{5}$/;
+                if (postalCode.value && !postalRegex.test(postalCode.value)) {
+                    postalCode.classList.add('is-invalid');
+                    isValid = false;
+                }
+                
+                if (isValid) {
+                    const submitBtn = document.querySelector('button[form="checkoutForm"]');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
                     
-                    // Reset form atau redirect
-                    // window.location.href = 'order_success.php';
-                    
-                    // Reset button
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                }, 2000);
-            } else {
-                alert('Mohon lengkapi semua field yang wajib diisi dengan benar.');
-            }
-        });
-        
-        // Real-time validation
-        document.querySelectorAll('input, select, textarea').forEach(field => {
-            field.addEventListener('input', function() {
-                if (this.hasAttribute('required') && this.value.trim()) {
-                    this.classList.remove('is-invalid');
+                    // Simulate processing
+                    setTimeout(() => {
+                        const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+
+                        if (paymentMethod === 'transfer') {
+                            const orderId = 'INV-' + Date.now();
+                            const totalAmount = document.querySelector('.total-amount').textContent.trim();
+                            
+                            document.getElementById('transferOrderId').textContent = orderId;
+                            document.getElementById('transferTotalAmount').textContent = totalAmount;
+
+                            const transferModal = new bootstrap.Modal(document.getElementById('transferModal'));
+                            transferModal.show();
+                        } else { // COD
+                            const codModal = new bootstrap.Modal(document.getElementById('codSuccessModal'));
+                            codModal.show();
+                        }
+
+                        // Add event listener to reset button when any modal is closed
+                        document.querySelectorAll('.modal').forEach(modalEl => {
+                            modalEl.addEventListener('hidden.bs.modal', () => {
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = originalText;
+                                checkoutForm.reset();
+                            }, { once: true }); // 'once' ensures the event fires only one time
+                        });
+
+                    }, 1500); // Shorter delay for better UX
+                } else {
+                    alert('Mohon lengkapi semua field yang wajib diisi dengan benar.');
                 }
             });
-        });
-        
-        // Format currency display
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR'
-            }).format(amount);
-        }
-        
-        // Payment method change handler
-        document.querySelectorAll('[name="payment_method"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const transferInfo = document.getElementById('transferInfo');
-                if (this.value === 'transfer' && !transferInfo) {
-                    // Add transfer info
-                    const info = document.createElement('div');
-                    info.id = 'transferInfo';
-                    info.className = 'alert alert-info mt-3';
-                    info.innerHTML = `
-                        <strong>Informasi Transfer:</strong><br>
-                        Bank BCA: 1234567890<br>
-                        A.n: UMKM Mini-Commerce<br>
-                        <small>Silakan transfer sesuai total pesanan</small>
-                    `;
-                    this.closest('.card-body').appendChild(info);
-                } else if (this.value === 'cod' && transferInfo) {
-                    transferInfo.remove();
-                }
+            
+            // --- Real-time Validation ---
+            document.querySelectorAll('input, select, textarea').forEach(field => {
+                field.addEventListener('input', function() {
+                    if (this.hasAttribute('required') && this.value.trim()) {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            });
+
+            // --- Dynamic Info for Bank Transfer ---
+            const paymentRadios = document.querySelectorAll('[name="payment_method"]');
+            const transferInfoSection = document.createElement('div');
+            transferInfoSection.id = 'transferInfo';
+            transferInfoSection.className = 'alert alert-secondary mt-3';
+            transferInfoSection.innerHTML = `
+                <strong>Informasi Transfer:</strong><br>
+                <small>Bank BCA: <strong>1234567890</strong><br>
+                A.n: <strong>UMKM Mini-Commerce</strong><br>
+                Silakan transfer sesuai total pesanan setelah membuat pesanan.</small>
+            `;
+
+            paymentRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const formBody = document.querySelector('#checkoutForm .card-body');
+                    const existingInfo = document.getElementById('transferInfo');
+                    
+                    if (this.value === 'transfer' && !existingInfo) {
+                        // Insert the info after the payment methods section
+                        this.closest('.row.mb-4').insertAdjacentElement('afterend', transferInfoSection);
+                    } else if (this.value === 'cod' && existingInfo) {
+                        existingInfo.remove();
+                    }
+                });
             });
         });
     </script>

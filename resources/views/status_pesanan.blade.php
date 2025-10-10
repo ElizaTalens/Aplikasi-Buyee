@@ -297,7 +297,6 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="index.php">
@@ -315,13 +314,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="search.php">
+                        <a class="nav-link" href="/pencarian">
                             <i class="fas fa-search me-1"></i>Pencarian
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="orders.php">
-                            <i class="fas fa-box me-1"></i>Pesanan Saya
                         </a>
                     </li>
                 </ul>
@@ -338,7 +332,7 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="profile.php">Profil</a></li>
-                            <li><a class="dropdown-item" href="orders.php">Pesanan Saya</a></li>
+                            <li><a class="dropdown-item" href="status_pesanan.html">Pesanan Saya</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="logout.php">Logout</a></li>
                         </ul>
@@ -349,7 +343,6 @@
     </nav>
 
     <div class="container mt-4">
-        <!-- Page Header -->
         <div class="page-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -367,7 +360,6 @@
             </div>
         </div>
 
-        <!-- Filter Tabs -->
         <div class="filter-tabs">
             <ul class="nav nav-tabs" id="orderTabs" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -398,11 +390,8 @@
             </ul>
         </div>
 
-        <!-- Tab Content -->
         <div class="tab-content" id="orderTabContent">
-            <!-- All Orders Tab -->
             <div class="tab-pane fade show active" id="all" role="tabpanel">
-                <!-- Order 1 - Dikirim -->
                 <div class="card order-card">
                     <div class="order-header">
                         <div class="d-flex justify-content-between align-items-start">
@@ -417,7 +406,6 @@
                     </div>
                     
                     <div class="card-body">
-                        <!-- Timeline -->
                         <div class="order-timeline">
                             <div class="timeline-item">
                                 <div class="timeline-icon active">
@@ -465,7 +453,6 @@
                             </div>
                         </div>
 
-                        <!-- Products -->
                         <h6 class="mt-4 mb-3">Produk yang Dipesan:</h6>
                         <div class="product-item">
                             <div class="product-image">
@@ -478,7 +465,6 @@
                             </div>
                         </div>
 
-                        <!-- Order Summary -->
                         <div class="mt-3 p-3 bg-light rounded">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Subtotal Produk:</span>
@@ -509,7 +495,6 @@
                     </div>
                 </div>
 
-                <!-- Order 2 - Diproses -->
                 <div class="card order-card">
                     <div class="order-header">
                         <div class="d-flex justify-content-between align-items-start">
@@ -524,7 +509,6 @@
                     </div>
                     
                     <div class="card-body">
-                        <!-- Timeline -->
                         <div class="order-timeline">
                             <div class="timeline-item">
                                 <div class="timeline-icon active">
@@ -571,7 +555,6 @@
                             </div>
                         </div>
 
-                        <!-- Products -->
                         <h6 class="mt-4 mb-3">Produk yang Dipesan:</h6>
                         <div class="product-item">
                             <div class="product-image">
@@ -584,7 +567,6 @@
                             </div>
                         </div>
 
-                        <!-- Order Summary -->
                         <div class="mt-3 p-3 bg-light rounded">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Subtotal Produk:</span>
@@ -612,7 +594,6 @@
                     </div>
                 </div>
 
-                <!-- Order 3 - Selesai -->
                 <div class="card order-card">
                     <div class="order-header">
                         <div class="d-flex justify-content-between align-items-start">
@@ -632,7 +613,6 @@
                             Pesanan telah selesai dan diterima pada <strong>18 Sep 2025, 14:30 WIB</strong>
                         </div>
 
-                        <!-- Products -->
                         <h6 class="mb-3">Produk yang Dipesan:</h6>
                         <div class="product-item">
                             <div class="product-image">
@@ -645,7 +625,6 @@
                             </div>
                         </div>
 
-                        <!-- Order Summary -->
                         <div class="mt-3 p-3 bg-light rounded">
                             <div class="d-flex justify-content-between">
                                 <strong>Total Pembayaran:</strong>
@@ -665,7 +644,6 @@
                 </div>
             </div>
 
-            <!-- Process Tab -->
             <div class="tab-pane fade" id="process" role="tabpanel">
                 <div class="empty-state">
                     <i class="fas fa-clock"></i>
@@ -674,7 +652,6 @@
                 </div>
             </div>
 
-            <!-- Shipped Tab -->
             <div class="tab-pane fade" id="shipped" role="tabpanel">
                 <div class="empty-state">
                     <i class="fas fa-shipping-fast"></i>
@@ -683,7 +660,6 @@
                 </div>
             </div>
 
-            <!-- Completed Tab -->
             <div class="tab-pane fade" id="completed" role="tabpanel">
                 <div class="empty-state">
                     <i class="fas fa-check-circle"></i>
@@ -692,7 +668,6 @@
                 </div>
             </div>
 
-            <!-- Cancelled Tab -->
             <div class="tab-pane fade" id="cancelled" role="tabpanel">
                 <div class="empty-state">
                     <i class="fas fa-times-circle"></i>
@@ -703,7 +678,6 @@
         </div>
     </div>
 
-    <!-- Tracking Modal -->
     <div class="modal fade" id="trackingModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -777,7 +751,6 @@
         </div>
     </div>
 
-    <!-- Cancel Order Modal -->
     <div class="modal fade" id="cancelModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -823,7 +796,6 @@
         </div>
     </div>
 
-    <!-- Review Modal -->
     <div class="modal fade" id="reviewModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
