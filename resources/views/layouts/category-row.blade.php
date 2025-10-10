@@ -71,4 +71,7 @@
       <div class="text-base font-semibold text-gray-700">Shoes</div>
     </a>
   </div>
+
 </section>
+
+

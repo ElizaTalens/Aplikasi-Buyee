@@ -76,7 +76,7 @@
     <div class="relative group">
         {{-- Tautan Ikon User --}}
         @auth
-            <a href="{{ route('user_profil') }}" class="p-2 hover:text-gray-900" aria-label="Profil/Dashboard">
+            <a href="{{ route('profile.index') }}" class="p-2 hover:text-gray-900" aria-label="Profil/Dashboard">
                 <i class="fa-solid fa-user fa-xl hover:text-gray-500"></i>
             </a>
         @else
@@ -94,7 +94,7 @@
             <div class="p-2 space-y-1">
                 @auth
                     {{-- Opsi: Profile Saya --}}
-                    <a href="{{ route('user_profil') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-50 text-gray-800 transition">
+                    <a href="{{ route('profile.index') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-50 text-gray-800 transition">
                         <i class="fa-solid fa-user mr-3 text-lg text-indigo-500"></i>
                         <span class="font-semibold">Profile Saya</span>
                     </a>
