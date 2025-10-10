@@ -9,7 +9,8 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\ProfileController;
-
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\OrderController;
 /*
 |--------------------------------------------------------------------------
 | PUBLIC PAGES
@@ -20,6 +21,9 @@ Route::get('/catalog', [ProductController::class, 'index'])->name('catalog');
 
 // REKOMENDASI: Gunakan controller untuk detail produk agar lebih rapi
 Route::get('/product/{product:slug}', [ProductController::class, 'show'])->name('product.detail');
+
+// --- ORDERS (RIWAYAT PESANAN) ---  <-- TAMBAHKAN BAGIAN INI
+Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
 
 /*
 |--------------------------------------------------------------------------
@@ -68,7 +72,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     
     // --- CHECKOUT ---
-    Route::get('/checkout', fn() => view('pages.checkout'))->name('checkout');
+ 
+    // Ganti route checkout ini
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
 
     // --- ADMIN DASHBOARD (jika diperlukan) ---
     Route::get('/buyee_admin_dashboard', fn () => view('pages.buyee_admin_dashboard'))

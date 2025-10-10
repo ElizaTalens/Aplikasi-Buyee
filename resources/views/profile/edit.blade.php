@@ -4,7 +4,7 @@
 
 @section('content')
 
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+<main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
 
     {{-- Breadcrumbs --}}
     <nav class="text-sm text-gray-500 pb-5">
@@ -37,13 +37,9 @@
                         {{-- Group Menu: Pembelian --}}
                         <div>
                             <h3 class="px-3 py-2 text-xs font-semibold uppercase text-gray-400 tracking-wider">Pembelian</h3>
-                            <a href="#" class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                            <a href="{{ route('orders.index') }}" class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
                                 <i class="fa-solid fa-receipt w-6 text-center mr-2"></i>
-                                Daftar Transaksi
-                            </a>
-                            <a href="#" class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                                <i class="fa-solid fa-star w-6 text-center mr-2"></i>
-                                Ulasan
+                                Riwayat Pesanan
                             </a>
                         </div>
 

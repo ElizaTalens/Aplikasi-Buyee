@@ -13,7 +13,7 @@
   @include('layouts.navbar')
 
   <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
-    <nav class="pt-30 text-sm text-gray-500">
+    <nav class="text-sm text-gray-500">
       <ol class="flex items-center gap-3">
         <li><a href="{{ route('home') }}" class="hover:text-gray-900">Home</a></li>
         <li class="text-gray-300">›</li>
