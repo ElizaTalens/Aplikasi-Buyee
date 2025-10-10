@@ -7,7 +7,7 @@
     {{-- ======================================================= --}}
     {{-- |                BAGIAN 1: HERO BANNER                | --}}
     {{-- ======================================================= --}}
-    <section class="mx-auto max-w-7xl pt-30">
+    <section class="mx-auto max-w-7xl pt-10">
         <div class="relative overflow-hidden rounded-2xl bg-[#2a242b] p-10 text-white min-h-[360px] flex items-center">
             {{-- Text --}}
             <div class="max-w-xl">
@@ -33,7 +33,7 @@
     {{-- ======================================================= --}}
     {{-- |           BAGIAN 2: BROWSE BY CATEGORY            | --}}
     {{-- ======================================================= --}}
-    <section class="my-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section class="my-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between">
             <h3 class="text-lg font-semibold">Browse By Category</h3>
             <div class="flex items-center gap-2">
@@ -75,7 +75,7 @@
     {{-- ======================================================= --}}
     {{-- |          BAGIAN 3: PRODUCT GRID TABS              | --}}
     {{-- ======================================================= --}}
-    <section class="my-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section class="my-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Tabs --}}
         <div class="flex items-center gap-6 border-b border-gray-200">
             <button type="button" class="tab-button relative text-lg pb-3 font-semibold text-gray-900 after:absolute after:inset-x-0 after:-bottom-[1px] after:h-0.5 after:bg-gray-900" data-tab="new-arrival">

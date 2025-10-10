@@ -5,138 +5,53 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use App\Models\User;
-use App\Models\Adress;
-use App\Models\CartItem;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
     /**
-     * Tampilkan halaman utama profil.
+     * Menampilkan form edit profil yang digabung.
      */
-    public function index()
+    public function edit(): View
     {
         $user = Auth::user();
         
-        $walletData = [
-            'gopay' => $this->getGopayBalance($user->id),
-            'saldo' => $this->getUserSaldo($user->id),
-        ];
-
-        // Ambil data item dari keranjang belanja
-        $cartItems = CartItem::with('product')
-            ->where('user_id', Auth::id())
-            ->latest()
-            ->take(3)
-            ->get();
-        
-        // Hitung total harga dari item yang diambil
-        $total = $cartItems->sum(function($item) {
-            return $item->quantity * $item->price;
-        });
-        
-        // Kirim semua variabel yang dibutuhkan ke view
-        return view('pages.userProfile', compact( 
-            'user', 
-            'walletData',
-            'cartItems',
-            'total'
-        ));
+        // FIX: Method 'edit' harus mengembalikan sebuah 'view'
+        return view('profile.edit', compact('user'));
     }
 
     /**
-     * Tampilkan form edit biodata.
+     * Memperbarui semua informasi profil pengguna dari satu form.
      */
-    public function editBiodata()
+    public function update(Request $request): RedirectResponse
     {
-        $user = Auth::user();
-        return view('profile.edit-biodata', compact('user'));
-    }
+        // 1. Ambil pengguna yang sedang login
+        $user = $request->user();
 
-    /**
-     * Perbarui biodata pengguna.
-     */
-    public function updateBiodata(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'birth_date' => 'nullable|date',
-            'gender' => 'nullable|in:male,female',
+        // 2. Validasi semua input dari form
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'birth_date' => ['nullable', 'date'],
+            'gender' => ['nullable', 'string', 'in:male,female'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ]);
 
-        $user = User::find(Auth::id());
-        $user->name = $request->name;
-        $user->birth_date = $request->birth_date;
-        $user->gender = $request->gender;
-        $user->save();
-
-        return redirect()->route('profile.index')
-            ->with('success', 'Biodata berhasil diperbarui!');
-    }
-
-    /**
-     * Tampilkan form edit kontak.
-     */
-    public function editContact()
-    {
-        $user = Auth::user();
-        return view('profile.edit-contact', compact('user'));
-    }
-
-    /**
-     * Perbarui informasi kontak pengguna.
-     */
-    public function updateContact(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email|unique:users,email,' . Auth::id(),
-            'phone' => 'nullable|string|max:20',
-        ]);
-
-        $user = User::find(Auth::id());
-        $user->email = $request->email;
-        $user->phone = $request->phone;
-        $user->save();
-
-        return redirect()->route('profile.index')
-            ->with('success', 'Kontak berhasil diperbarui!');
-    }
-
-    /**
-     * Unggah dan perbarui foto profil.
-     */
-    public function updatePhoto(Request $request)
-    {
-        $request->validate([
-            'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-
-        $user = User::find(Auth::id());
-
-        // Hapus foto lama jika ada
-        if ($user->profile_photo) {
-            Storage::disk('public')->delete($user->profile_photo);
+        // 3. Logika untuk update foto profil jika ada file yang diunggah
+        if ($request->hasFile('photo')) {
+            // Hapus foto lama jika ada
+            if ($user->profile_photo_path) {
+                Storage::disk('public')->delete($user->profile_photo_path);
+            }
+            // Simpan foto baru dan update path di database
+            $validated['profile_photo_path'] = $request->file('photo')->store('profile-photos', 'public');
         }
 
-        // Simpan foto baru
-        $photoPath = $request->file('photo')->store('profile-photos', 'public');
-        
-        $user->profile_photo = $photoPath;
-        $user->save();
+        // 4. Update data pengguna dengan data yang sudah divalidasi
+        $user->update($validated);
 
-        return redirect()->route('profile.index')
-            ->with('success', 'Foto profil berhasil diperbarui!');
-    }
-
-    // Metode Helper
-    private function getGopayBalance($userId)
-    {
-        return 9091; 
-    }
-
-    private function getUserSaldo($userId)
-    {
-        $user = User::find($userId);
-        return $user->wallet_balance ?? 300;
+        // 5. Arahkan kembali ke halaman edit dengan pesan sukses
+        return redirect()->route('profile.edit')->with('status', 'profile-updated');
     }
 }

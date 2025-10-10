@@ -8,7 +8,7 @@
 
     <div class="flex-1">
       <form action="{{ route('catalog') }}" method="GET" class="relative group">
-        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+        <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
         <input
           name="search"
           type="search"
@@ -59,7 +59,7 @@
 
     {{-- Wishlist --}}
     @auth
-      <a href="{{ route('wishlist') }}" class="relative" aria-label="Wishlist">
+      <a href="{{ route('wishlist.index') }}" class="relative" aria-label="Wishlist">
         <i class="fa-regular fa-heart fa-xl hover:text-gray-500"></i>
         <span id="wishlistCount"
               class="absolute -right-2 -top-2 {{ $wishTotal ? '' : 'hidden' }} min-w-[18px] rounded-full bg-rose-600 px-1.5 text-[11px] font-bold text-white text-center">
@@ -78,7 +78,7 @@
 
     {{-- Cart --}}
     @auth
-      <a href="{{ route('cart') }}" class="relative" aria-label="Cart">
+      <a href="{{ route('cart.index') }}" class="relative" aria-label="Cart">
         <i class="fa-solid fa-cart-shopping fa-xl hover:text-gray-500"></i>
         <span id="cartCount"
               class="absolute -right-2 -top-2 {{ $cartTotal ? '' : 'hidden' }} min-w-[18px] rounded-full bg-black px-1.5 text-[11px] font-bold text-white text-center">
@@ -117,7 +117,7 @@
             <div class="p-2 space-y-1">
                 @auth
                     {{-- Opsi: Profile Saya --}}
-                    <a href="{{ route('profile.index') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-50 text-gray-800 transition">
+                    <a href="{{ route('profile.edit') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-50 text-gray-800 transition">
                         <i class="fa-solid fa-user mr-3 text-lg text-indigo-500"></i>
                         <span class="font-semibold">Profile Saya</span>
                     </a>

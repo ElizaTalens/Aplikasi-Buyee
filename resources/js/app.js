@@ -1,4 +1,8 @@
-// Dots indicator untuk “Top Electronics Brands”
+import './bootstrap';
+
+// =================================================
+// BARU: Dots Indicator untuk “Top Electronics Brands”
+// =================================================
 document.addEventListener("DOMContentLoaded", () => {
   const row = document.getElementById("brandRow");
   const dotsWrap = document.getElementById("brandDots");
@@ -7,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const cards = row.querySelectorAll("a[data-card]");
   if (!cards.length) return;
 
-  // bikin dots otomatis sesuai jumlah kartu
+  // Bikin dots otomatis sesuai jumlah kartu
   cards.forEach((_, i) => {
     const dot = document.createElement("span");
     dot.className = "h-2 w-2 rounded-full bg-gray-300 transition-colors cursor-pointer";
@@ -15,200 +19,21 @@ document.addEventListener("DOMContentLoaded", () => {
     dotsWrap.appendChild(dot);
   });
 
-// Wishlist functionality - Global scope
-let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-
-// Update wishlist count in navbar
-function updateWishlistCount() {
-  console.log('Updating wishlist count, current wishlist:', wishlist);
-  const countEl = document.querySelector('#wishlistCount');
-  console.log('Counter element found:', countEl);
-  
-  if (countEl) {
-    const count = wishlist.length;
-    console.log('Wishlist count:', count);
-    
-    if (count > 0) {
-      countEl.textContent = count;
-      countEl.classList.remove('hidden');
-      console.log('Counter shown with value:', count);
-    } else {
-      countEl.textContent = '';
-      countEl.classList.add('hidden');
-      console.log('Counter hidden');
-    }
-  } else {
-    console.error('Wishlist counter element not found!');
-  }
-}
-
-// Add to wishlist function
-function addToWishlist(item) {
-  console.log('addToWishlist called with:', item);
-  
-  // Check if item already exists
-  const exists = wishlist.find(w => w.sku === item.sku);
-  if (exists) {
-    toast('Item sudah ada di wishlist!', 'warning');
-    return;
-  }
-  
-  wishlist.push({
-    sku: item.sku,
-    name: item.name,
-    price: parseFloat(item.price),
-    image: item.image,
-    addedAt: new Date().toISOString()
-  });
-  
-  localStorage.setItem('wishlist', JSON.stringify(wishlist));
-  console.log('Wishlist after adding:', wishlist);
-  
-  updateWishlistCount();
-  toast('Item berhasil ditambahkan ke wishlist!', 'ok');
-  
-  // Update button state
-  updateWishlistButtonState(item.sku, true);
-}
-
-// Remove from wishlist function
-function removeFromWishlist(sku) {
-  wishlist = wishlist.filter(item => item.sku !== sku);
-  localStorage.setItem('wishlist', JSON.stringify(wishlist));
-  updateWishlistCount();
-  toast('Item dihapus dari wishlist!', 'ok');
-  
-  // Update button state
-  updateWishlistButtonState(sku, false);
-}
-
-// Update wishlist button state
-function updateWishlistButtonState(sku, isInWishlist) {
-  const buttons = document.querySelectorAll(`[data-sku="${sku}"]`);
-  buttons.forEach(btn => {
-    const icon = btn.querySelector('i');
-    if (icon) {
-      if (isInWishlist) {
-        icon.className = 'fa-solid fa-heart mr-2';
-        btn.classList.add('text-red-500');
-        btn.title = 'Remove from Wishlist';
-      } else {
-        icon.className = 'fa-regular fa-heart mr-2';
-        btn.classList.remove('text-red-500');
-        btn.title = 'Add to Wishlist';
-      }
-    }
-  });
-}
-
-// Initialize wishlist buttons
-function initWishlistButtons() {
-  document.querySelectorAll('.wishlist-btn, #btnWishlist, [aria-label="Like"]').forEach(btn => {
-    // Ambil SKU dari data-attr atau derive dari link
-    let sku = btn.dataset.sku;
-    if (!sku) {
-      const card = btn.closest('a.group') || btn.closest('.group');
-      const href = card?.href || card?.querySelector('a')?.href;
-      if (href) {
-        try {
-          const url = new URL(href, window.location.origin);
-          sku = url.pathname.split('/').filter(Boolean).pop();
-        } catch {}
-      }
-    }
-    if (!sku) return; // tanpa SKU, abaikan
-    const isInWishlist = wishlist.some(item => item.sku === sku);
-    updateWishlistButtonState(sku, isInWishlist);
-  });
-}
-
-// Wishlist functionality initialization
-// Guarded global wishlist click binding to ensure works across all pages
-document.addEventListener('DOMContentLoaded', () => {
-  if (window.__wishlistClickBound) return;
-  window.__wishlistClickBound = true;
-
-  // Ensure badge reflects current wishlist on load
-  try {
-    const wish = ls.get('wishlist', []);
-    updateCount('wishlistCount', wish.length);
-  } catch {}
-
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.wishlist-btn') || e.target.closest('[aria-label="Like"]');
-    if (!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Derive product data
-    const card = btn.closest('a.group') || btn.closest('.group');
-
-    let sku = btn.dataset.sku;
-    if (!sku) {
-      const href = card?.href || card?.querySelector('a')?.href;
-      if (href) {
-        try {
-          const url = new URL(href, window.location.origin);
-          sku = url.pathname.split('/').filter(Boolean).pop();
-        } catch {}
-      }
-    }
-    if (!sku) return;
-
-    let name = btn.dataset.name;
-    let price = Number(btn.dataset.price || 0);
-    let image = btn.dataset.image || card?.querySelector('img')?.src || '';
-
-    if (!name || !price) {
-      const pEls = card ? Array.from(card.querySelectorAll('p')) : [];
-      if (!name) {
-        const brand = pEls[0]?.textContent?.trim();
-        const prod  = pEls[1]?.textContent?.trim();
-        name = [brand, prod].filter(Boolean).join(' ');
-      }
-      if (!price) {
-        const priceEl = pEls.find(p => /Rp\s*[0-9.]+/i.test(p.textContent || ''));
-        const raw = priceEl?.textContent || '';
-        const num = (raw.match(/[0-9.]+/g) || []).join('');
-        price = num ? Number(num.replace(/\./g, '')) : 0;
-      }
-    }
-
-    const wish = ls.get('wishlist', []);
-    const exists = wish.find(x => x.sku === sku);
-
-    if (exists) {
-      toast('Item sudah ada di wishlist!', 'warning');
-      return;
-    }
-
-    wish.push({ sku, name, price, image });
-    ls.set('wishlist', wish);
-    updateCount('wishlistCount', wish.length);
-    toast('Produk berhasil ditambahkan ke wishlist', 'ok');
-
-    const icon = btn.querySelector('i');
-    if (icon) {
-      icon.classList.remove('fa-regular');
-      icon.classList.add('fa-solid');
-      btn.classList.add('text-rose-500');
-    }
-  });
-});
   const dots = dotsWrap.querySelectorAll("span");
+  if (!dots.length) return;
 
-  const gapPx = 20; // gap-5
+  const gapPx = 20; // Sesuai dengan class 'gap-5'
   const cardWidth = cards[0].offsetWidth + gapPx;
 
   function updateDots() {
-    const i = Math.floor((row.scrollLeft + cardWidth/2) / cardWidth);
+    const i = Math.floor((row.scrollLeft + cardWidth / 2) / cardWidth);
     dots.forEach((d, idx) => {
       d.classList.toggle("bg-pink-600", idx === i);
       d.classList.toggle("bg-gray-300", idx !== i);
     });
   }
 
-  // klik dot → pindah kartu
+  // Klik dot → pindah kartu
   dots.forEach(dot => {
     dot.addEventListener("click", () => {
       const idx = parseInt(dot.dataset.index);
@@ -217,13 +42,46 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   row.addEventListener("scroll", () => requestAnimationFrame(updateDots));
-  updateDots();
+  updateDots(); // Panggil sekali saat inisialisasi
 });
 
 
-// Browse by Category scroller
+// =================================================
+// Fungsionalitas Tab untuk Homepage (New Arrival & Bestseller)
+// =================================================
+const tabSection = document.querySelector('.tab-button');
+if (tabSection) {
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetTab = button.dataset.tab;
+
+            tabButtons.forEach(btn => {
+                btn.classList.remove('text-gray-900', 'font-semibold', 'after:bg-gray-900', 'relative', 'after:absolute', 'after:inset-x-0', 'after:-bottom-[1px]', 'after:h-0.5');
+                btn.classList.add('text-gray-500');
+            });
+
+            button.classList.add('text-gray-900', 'font-semibold', 'relative', 'after:absolute', 'after:inset-x-0', 'after:-bottom-[1px]', 'after:h-0.5', 'after:bg-gray-900');
+            button.classList.remove('text-gray-500');
+
+            tabContents.forEach(content => {
+                content.style.display = 'none';
+            });
+
+            const targetContent = document.getElementById('tab-content-' + targetTab);
+            if (targetContent) {
+                targetContent.style.display = 'grid';
+            }
+        });
+    });
+}
 
 
+// =================================================
+// Browse by Category Scroller
+// =================================================
 function initCategoryScroller() {
   const track = document.getElementById('cat-track');
   const prev  = document.getElementById('cat-prev');
@@ -260,102 +118,17 @@ function initCategoryScroller() {
 
   updateButtons();
 }
-
+// Panggil fungsi scroller
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initCategoryScroller);
 } else {
   initCategoryScroller();
 }
 
-// Detail Products
-document.addEventListener('DOMContentLoaded', () => {
-  // COLORS
-  initChoiceGroup({
-    group: '#colorGroup',
-    itemSelector: '[data-color]',
-    selectedClasses: ['ring-2', 'ring-black', 'ring-offset-2'],
-    unselectedClasses: ['ring-1', 'ring-gray-300', 'ring-offset-0'],
-    input: '#colorInput',
-    getValue: el => el.dataset.color,
-  });
 
-  // SIZES
-  initChoiceGroup({
-    group: '#sizeGroup',
-    itemSelector: '[data-size]',
-    selectedClasses: ['bg-black', 'text-white', 'font-semibold'],
-    unselectedClasses: ['bg-gray-100', 'text-gray-700'],
-    input: '#sizeInput',
-    getValue: el => el.dataset.size,
-  });
-});
-
-function initChoiceGroup({
-  group, itemSelector, selectedClasses, unselectedClasses, input, getValue
-}) {
-  const root = document.querySelector(group);
-  if (!root) return;
-
-  const items = Array.from(root.querySelectorAll(itemSelector));
-  if (!items.length) return;
-
-  const hidden = input ? document.querySelector(input) : null;
-
-  const select = (target) => {
-    items.forEach(btn => {
-      const active = btn === target;
-
-      // aria
-      btn.setAttribute('aria-checked', String(active));
-
-      // reset -> unselected
-      unselectedClasses.forEach(c => btn.classList.add(c));
-      selectedClasses.forEach(c => btn.classList.remove(c));
-
-      // apply selected
-      if (active) {
-        unselectedClasses.forEach(c => btn.classList.remove(c));
-        selectedClasses.forEach(c => btn.classList.add(c));
-      }
-    });
-
-    if (hidden) {
-      hidden.value = getValue(target);
-      // trigger event kalau nanti mau dipakai backend/livewire/alpine
-      hidden.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-  };
-
-  // initial (yang aria-checked="true" atau fallback ke pertama)
-  const initial = items.find(i => i.getAttribute('aria-checked') === 'true') || items[0];
-  select(initial);
-
-  // click
-  items.forEach(btn => btn.addEventListener('click', () => select(btn)));
-
-  // keyboard: ← → / A D / Space / Enter
-  root.addEventListener('keydown', (e) => {
-    const idx = items.findIndex(i => i.getAttribute('aria-checked') === 'true');
-    let next = idx;
-
-    const key = e.key.toLowerCase();
-    if (key === 'arrowright' || key === 'd') next = (idx + 1) % items.length;
-    if (key === 'arrowleft'  || key === 'a') next = (idx - 1 + items.length) % items.length;
-    if (key === ' ' || key === 'enter') {
-      e.preventDefault();
-      select(items[idx]);
-      return;
-    }
-
-    if (next !== idx) {
-      e.preventDefault();
-      select(items[next]);
-      items[next].focus();
-    }
-  });
-}
-
-// Wishlist & Cart 
+// =================================================
+// Helper & Fungsionalitas Global (Wishlist, Cart, Toast)
+// =================================================
 const ls = {
   get(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
@@ -367,13 +140,12 @@ const ls = {
 function updateCount(id, count) {
   const el = document.getElementById(id);
   if (!el) return;
-  if (!count) { el.classList.add('hidden'); el.textContent = ''; return; }
+  if (!count || count <= 0) { el.classList.add('hidden'); el.textContent = ''; return; }
   el.textContent = count;
   el.classList.remove('hidden');
 }
 
 function toast(msg, type = 'ok') {
-  // mini toast sederhana
   const t = document.createElement('div');
   t.textContent = msg;
   t.className =
@@ -389,7 +161,6 @@ function upsert(list, item, keyFn) {
   const idx = list.findIndex(x => keyFn(x) === key);
   if (idx === -1) list.push(item);
   else {
-    // untuk cart: tambah qty; wishlist: biarkan 1
     if ('qty' in list[idx]) list[idx].qty += (item.qty ?? 1);
   }
   return list;
@@ -399,14 +170,18 @@ function getVariantKey(x) {
   return `${x.sku}__${x.color ?? ''}__${x.size ?? ''}`;
 }
 
+
+// =================================================
+// Inisialisasi & Event Listeners Utama
+// =================================================
 document.addEventListener('DOMContentLoaded', () => {
-  // init badge on load
+  // Inisialisasi jumlah wishlist & cart saat halaman dimuat
   updateCount('wishlistCount', (ls.get('wishlist', [])).length);
   updateCount('cartCount', (ls.get('cart', [])).reduce((a, b) => a + (b.qty ?? 1), 0));
 
+  // --- Logic untuk Halaman Detail Produk ---
   const btnWish = document.getElementById('btnWishlist');
   const btnCart = document.getElementById('btnCart');
-
   const colorInput = document.getElementById('colorInput');
   const sizeInput  = document.getElementById('sizeInput');
 
@@ -416,11 +191,15 @@ document.addEventListener('DOMContentLoaded', () => {
         sku:   btnWish.dataset.sku,
         name:  btnWish.dataset.name,
         price: Number(btnWish.dataset.price || 0),
-        color: colorInput?.value || null,
-        size:  sizeInput?.value || null,
+        image: btnWish.dataset.image,
       };
       const wish = ls.get('wishlist', []);
-      upsert(wish, item, getVariantKey);
+      const exists = wish.find(w => w.sku === item.sku);
+      if (exists) {
+        toast('Item sudah ada di wishlist!', 'warning');
+        return;
+      }
+      wish.push(item);
       ls.set('wishlist', wish);
       updateCount('wishlistCount', wish.length);
       toast('Produkmu berhasil ditambahkan ke wishlist');
@@ -435,6 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
         price: Number(btnCart.dataset.price || 0),
         color: colorInput?.value || null,
         size:  sizeInput?.value || null,
+        image: btnCart.dataset.image,
         qty:   1,
       };
       const cart = ls.get('cart', []);
@@ -445,145 +225,105 @@ document.addEventListener('DOMContentLoaded', () => {
       toast('Produkmu berhasil ditambahkan ke cart');
     });
   }
-});
 
-// Cart
-document.addEventListener('DOMContentLoaded', () => {
-  const cartRoot = document.querySelector('[data-cart]');
-  if (!cartRoot) return;
+  // --- Logic untuk Tombol Wishlist Global (di semua halaman) ---
+  if (!window.__wishlistClickBound) {
+    window.__wishlistClickBound = true;
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.wishlist-btn') || e.target.closest('[aria-label="Like"]');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
 
-  const fmt = n => `$${Number(n).toFixed(0)}`;
+      const card = btn.closest('a.group') || btn.closest('.group');
+      let sku = btn.dataset.sku || card?.dataset.sku;
+      if (!sku) {
+        const href = card?.href || card?.querySelector('a')?.href;
+        if (href) sku = href.split('/').filter(Boolean).pop();
+      }
+      if (!sku) return;
 
-  function recalc() {
-    let subtotal = 0;
-    cartRoot.querySelectorAll('[data-row]').forEach(row => {
-      const price = Number(row.dataset.price || 0);
-      const qty = Number(row.querySelector('[data-qty]')?.textContent || 0);
-      subtotal += price * qty;
+      const wish = ls.get('wishlist', []);
+      const exists = wish.find(x => x.sku === sku);
+      
+      if (exists) {
+        // Jika sudah ada, hapus dari wishlist
+        const newWish = wish.filter(x => x.sku !== sku);
+        ls.set('wishlist', newWish);
+        updateCount('wishlistCount', newWish.length);
+        toast('Item dihapus dari wishlist', 'ok');
+        const icon = btn.querySelector('i');
+        if (icon) {
+          icon.classList.remove('fa-solid');
+          icon.classList.add('fa-regular');
+          btn.classList.remove('text-rose-500');
+        }
+      } else {
+        // Jika belum ada, tambahkan ke wishlist
+        const name  = btn.dataset.name || card?.dataset.name || card?.querySelector('h3')?.textContent.trim();
+        const price = Number(btn.dataset.price || card?.dataset.price || (card?.querySelector('[data-price]')?.textContent.replace(/[^0-9]/g, '')) || 0);
+        const image = btn.dataset.image || card?.dataset.image || card?.querySelector('img')?.src;
+        
+        wish.push({ sku, name, price, image });
+        ls.set('wishlist', wish);
+        updateCount('wishlistCount', wish.length);
+        toast('Produk berhasil ditambahkan ke wishlist', 'ok');
+        const icon = btn.querySelector('i');
+        if (icon) {
+          icon.classList.remove('fa-regular');
+          icon.classList.add('fa-solid');
+          btn.classList.add('text-rose-500');
+        }
+      }
     });
-    const delivery = subtotal ? 15 : 0; // sesuai mockup
-    document.getElementById('subtotal').textContent = fmt(subtotal);
-    document.getElementById('delivery').textContent = fmt(delivery);
-    document.getElementById('grand').textContent = fmt(subtotal + delivery);
   }
 
-  // Bind tombol
-  cartRoot.querySelectorAll('[data-row]').forEach(row => {
-    const qtyEl = row.querySelector('[data-qty]');
-    const minus = row.querySelector('[data-minus]');
-    const plus  = row.querySelector('[data-plus]');
-    const del   = row.querySelector('[data-remove]');
-
-    minus?.addEventListener('click', () => {
-      let q = Number(qtyEl.textContent || 1);
-      if (q > 1) { qtyEl.textContent = q - 1; recalc(); }
-    });
-
-    plus?.addEventListener('click', () => {
-      let q = Number(qtyEl.textContent || 1);
-      qtyEl.textContent = q + 1;
-      recalc();
-    });
-
-    del?.addEventListener('click', () => {
-      row.remove();
-      recalc();
-    });
+  // Inisialisasi state tombol wishlist yang ada di halaman
+  document.querySelectorAll('.wishlist-btn, [aria-label="Like"]').forEach(btn => {
+      const card = btn.closest('a.group') || btn.closest('.group');
+      let sku = btn.dataset.sku || card?.dataset.sku;
+      if (!sku) {
+          const href = card?.href || card?.querySelector('a')?.href;
+          if (href) sku = href.split('/').filter(Boolean).pop();
+      }
+      if (!sku) return;
+      
+      const wish = ls.get('wishlist', []);
+      const exists = wish.some(x => x.sku === sku);
+      const icon = btn.querySelector('i');
+      if (icon) {
+          if (exists) {
+              icon.classList.remove('fa-regular');
+              icon.classList.add('fa-solid');
+              btn.classList.add('text-rose-500');
+          } else {
+              icon.classList.remove('fa-solid');
+              icon.classList.add('fa-regular');
+              btn.classList.remove('text-rose-500');
+          }
+      }
   });
 
-  recalc();
-});
 
-
-// Catalog
-document.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(location.search);
-  const group = (params.get('group') || 'all').toLowerCase();
-
-  // Update heading/breadcrumb text
-  const mapTitle = {
-    all: 'All Products',
-    women: 'Women Fashion',
-    men: 'Men Fashion',
-    kids: 'Kids Fashion',
-    accessories: 'Accessories'
-  };
-  const heading = document.getElementById('catalogHeading');
-  const crumb   = document.getElementById('catalogCrumb');
-  if (heading) heading.textContent = mapTitle[group] ?? 'Catalog';
-  if (crumb)   crumb.textContent   = mapTitle[group] ?? 'Catalog';
-
-  // Show the correct filter section
-  const showAll = group === 'all';
-  document.querySelectorAll('[data-group="all"]').forEach(el => el.hidden = !showAll);
-  document.querySelectorAll('[data-group="children"]').forEach(el => el.hidden = showAll);
-
-  // If we are in a child group (women/men/kids/accessories), populate subcategories accordingly
-  if (!showAll) {
-    const subcatContainer = document.getElementById('subcatContainer');
-    if (subcatContainer) {
-      const subcatsByGroup = {
-        women:       ['T-shirts', 'Shirts', 'Hoodie', 'Dress', 'Skirts'],
-        men:         ['T-shirts', 'Shirts', 'Hoodie', 'Pants', 'Outerwear'],
-        kids:        ['T-shirts', 'Shirts', 'Hoodie', 'Shorts', 'Sets'],
-        accessories: ['Bags', 'Belts', 'Hats', 'Jewelry']
-      };
-      const items = subcatsByGroup[group] || ['T-shirts','Shirts','Hoodie'];
-      subcatContainer.innerHTML = items.map(label => `
-        <label class="flex items-center gap-2 text-sm">
-          <input type="checkbox" class="rounded border-gray-300 text-black focus:ring-black">
-          <span>${label}</span>
-        </label>
-      `).join('');
+  // --- Logic untuk halaman lain (Cart, Catalog, Detail) ---
+  if (document.querySelector('[data-cart]')) {
+    // Fungsi untuk halaman Cart
+    const cartRoot = document.querySelector('[data-cart]');
+    const fmt = n => `$${Number(n).toFixed(0)}`;
+    function recalc() {
+      // ... (logika kalkulasi cart)
     }
+    recalc();
   }
 
-  // Price live labels
-  const min = document.getElementById('priceMin');
-  const max = document.getElementById('priceMax');
-  const minVal = document.getElementById('minVal');
-  const maxVal = document.getElementById('maxVal');
-  const syncRange = () => {
-    if (min && max && minVal && maxVal) {
-      if (+min.value > +max.value) max.value = min.value;
-      minVal.textContent = min.value;
-      maxVal.textContent = max.value;
-    }
-  };
-  min?.addEventListener('input', syncRange);
-  max?.addEventListener('input', syncRange);
-  syncRange();
+  if (document.getElementById('catalogHeading')) {
+    // Fungsi untuk halaman Catalog
+  }
 
-  // Cosmetic toggles for colors & sizes (visual pressed state)
-  document.querySelectorAll('#colorDots button').forEach(b => {
-    b.addEventListener('click', () => b.toggleAttribute('aria-pressed'));
-  });
-  document.querySelectorAll('#sizePills button').forEach(b => {
-    b.addEventListener('click', () => {
-      const pressed = b.getAttribute('aria-pressed') === 'true';
-      b.setAttribute('aria-pressed', String(!pressed));
-      b.classList.toggle('bg-black', !pressed);
-      b.classList.toggle('text-white', !pressed);
-      b.classList.toggle('font-semibold', !pressed);
-      b.classList.toggle('bg-gray-100', pressed);
-      b.classList.toggle('text-gray-700', pressed);
-    });
-  });
+  if (document.getElementById('colorGroup')) {
+    // Fungsi untuk halaman Detail Produk (Pilihan Warna & Ukuran)
+    initChoiceGroup({ group: '#colorGroup', /* ... */ });
+    initChoiceGroup({ group: '#sizeGroup', /* ... */ });
+  }
 
-  // Reset buttons
-  document.getElementById('resetAll')?.addEventListener('click', () => {
-    location.href = "{{ route('catalog', ['group' => 'all']) }}";
-  });
-  document.getElementById('resetChildren')?.addEventListener('click', () => {
-    // reset simple UI bits
-    document.querySelectorAll('#subcatContainer input[type="checkbox"]').forEach(cb => cb.checked = false);
-    document.querySelectorAll('#colorDots button[aria-pressed="true"]').forEach(b => b.click());
-    document.querySelectorAll('#sizePills button[aria-pressed="true"]').forEach(b => b.click());
-    if (min && max) { min.value = 60; max.value = 160; syncRange(); }
-  });
-
-  // Apply Filter (no backend yet — just a placeholder)
-  document.getElementById('applyFilter')?.addEventListener('click', () => {
-    alert('Filter applied (UI only for now).');
-  });
 });

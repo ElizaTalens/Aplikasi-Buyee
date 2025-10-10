@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-t" />
   <title>{{ $pageTitle }} — Buyee</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -39,6 +39,7 @@
               <a href="{{ route('catalog') }}" class="text-xs text-gray-500 hover:text-gray-700">Reset</a>
             </div>
 
+            {{-- Filter Kategori --}}
             <div class="border-t border-gray-100 pt-4">
               <div class="mb-3"><span class="text-sm font-semibold">Kategori</span></div>
               <div class="grid gap-2 text-sm">
@@ -56,8 +57,31 @@
               </div>
             </div>
             
-            {{-- Bagian filter lainnya tetap sama --}}
-            <input type="hidden" name="group" value="{{ request('group', 'all') }}">
+            {{-- Filter Urutkan (Best Seller) --}}
+            <div class="border-t border-gray-100 pt-4 mt-4">
+              <div class="mb-3"><span class="text-sm font-semibold">Urutkan</span></div>
+              <div class="flex items-center space-x-2">
+                <input type="checkbox" id="bestseller" name="sort" value="bestseller" 
+                       class="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
+                       {{ request('sort') == 'bestseller' ? 'checked' : '' }}>
+                <label for="bestseller" class="text-sm text-gray-700">Best Seller</label>
+              </div>
+            </div>
+
+            {{-- Filter Harga --}}
+            <div class="border-t border-gray-100 pt-4 mt-4">
+              <div class="mb-3"><span class="text-sm font-semibold">Harga</span></div>
+              <div class="flex items-center space-x-2">
+                <input type="number" name="min_price" value="{{ request('min_price') }}" placeholder="Min" 
+                       class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-black focus:ring-black">
+                <span class="text-gray-400">-</span>
+                <input type="number" name="max_price" value="{{ request('max_price') }}" placeholder="Max" 
+                       class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-black focus:ring-black">
+              </div>
+            </div>
+            
+            {{-- Hidden input & Tombol Terapkan --}}
+            <input type="hidden" name="group" value="{{ request('group') }}">
             <button type="submit" class="mt-6 w-full rounded-md bg-black py-2 text-sm font-semibold text-white hover:bg-gray-900">
               Terapkan Filter
             </button>
@@ -69,6 +93,17 @@
         <div id="productGrid" class="grid grid-cols-2 gap-5 sm:grid-cols-3">
           @forelse ($products as $product)
             <div class="group rounded-xl border border-gray-200 bg-white p-3 hover:shadow-card transition relative">
+              
+              {{-- =============================================== --}}
+              {{-- |        TOMBOL WISHLIST DITAMBAHKAN SINI       | --}}
+              {{-- =============================================== --}}
+              <button type="button" 
+                      class="wishlist-toggle-btn absolute top-4 right-4 z-10 grid h-8 w-8 place-items-center rounded-full bg-black/10 text-white backdrop-blur-sm transition hover:bg-black/20 {{-- $product->isInWishlist() ? 'is-active' : '' --}}" 
+                      data-product-id="{{ $product->id }}" 
+                      title="Add to Wishlist">
+                  <i class="fa-solid fa-heart"></i>
+              </button>
+
               <a href="{{ route('product.detail', $product->slug) }}" class="block">
                 <div class="aspect-[4/5] overflow-hidden rounded-lg bg-gray-50 ring-1 ring-gray-200">
                   <img src="{{ $product->images[0] ?? asset('images/placeholder.jpg') }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" alt="{{ $product->name }}">

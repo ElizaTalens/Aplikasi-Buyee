@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\Order; 
-use App\Models\User; 
+use App\Models\Order; // Asumsi kamu punya model Order
+use App\Models\User; // Asumsi kamu punya model User
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage; 
 
 class AdminController extends Controller
 {
@@ -58,23 +59,56 @@ class AdminController extends Controller
 
     public function saveProduct(Request $request)
     {
+        // 1. Validasi Input
         $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'price' => 'required|numeric',
             'stock' => 'required|integer',
             'is_active' => 'required|boolean',
+            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validasi 'image_file'
         ]);
 
-        $productId = $request->input('id');
-        if ($productId) {
-            $product = Product::findOrFail($productId);
-            $product->update($request->all());
-            return response()->json(['message' => 'Produk berhasil diupdate!']);
-        } else {
-            Product::create($request->all());
-            return response()->json(['message' => 'Produk berhasil ditambahkan!']);
+        // 2. Ambil atau Buat Model Product
+        $produk = $request->id ? Product::find($request->id) : new Product;
+
+        // 3. Proses upload IMAGE
+        // Ambil path lama (disimpan di kolom 'image' DB)
+        $path_gambar = $produk->image ?? null; 
+
+        // PERBAIKAN KRUSIAL A: Cek file yang diupload bernama 'image_file'
+        if ($request->hasFile('image_file')) { 
+            
+            // Hapus image lama jika ada (optional, tapi disarankan)
+            // Catatan: Ini mengasumsikan file lama disimpan di public/uploads/products/
+            if ($produk->image && file_exists(public_path($produk->image))) {
+                unlink(public_path($produk->image));
+            }
+
+            // PERBAIKAN KRUSIAL B: Mengambil file yang bernama 'image_file'
+            $file = $request->file('image_file'); 
+            $extension = $file->getClientOriginalExtension();
+            $fileName = 'uploads/products/' . time() . '_' . uniqid() . '.' . $extension; // Pastikan path konsisten
+
+            // Pindahkan file ke public/uploads/products/
+            $file->move(public_path('uploads/products'), basename($fileName)); 
+            
+            // **SIMPAN PATH RELATIF** dari folder public ke database
+            $path_gambar = $fileName; 
         }
+
+        // 4. Simpan data produk
+        // PERBAIKAN KRUSIAL C: Menggunakan nama field yang benar dari Request
+        $produk->name = $request->name;       
+        $produk->category_id = $request->category_id; // Tambahkan category_id
+        $produk->price = $request->price;     
+        $produk->stock = $request->stock;     
+        $produk->is_active = $request->is_active; // Tambahkan is_active
+        $produk->image = $path_gambar;        // Menyimpan path ke kolom 'image' di database
+
+        $produk->save();
+
+        return response()->json(['message' => 'Produk berhasil disimpan!']);
     }
 
     public function deleteProduct($id)
