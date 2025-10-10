@@ -1,1 +1,132 @@
 @extends('layouts.master')
+
+@section('title', 'Selamat Datang di Buyee - Belanja Online Mudah & Menyenangkan')
+
+@section('content')
+
+    {{-- ======================================================= --}}
+    {{-- |                BAGIAN 1: HERO BANNER                | --}}
+    {{-- ======================================================= --}}
+    <section class="mx-auto max-w-7xl pt-30">
+        <div class="relative overflow-hidden rounded-2xl bg-[#2a242b] p-10 text-white min-h-[360px] flex items-center">
+            {{-- Text --}}
+            <div class="max-w-xl">
+                <p class="text-sm text-white/70">Pro.Beyond.</p>
+                <h2 class="mt-2 text-5xl font-extrabold tracking-tight">
+                    iPhone 14 <span class="text-white/90">Pro</span>
+                </h2>
+                <p class="mt-2 text-xs text-white/60">
+                    Created to change everything for the better. For everyone
+                </p>
+                <a href="{{ route('catalog') }}" class="mt-6 inline-flex h-9 items-center justify-center rounded-md border border-white/40 px-4 text-xs font-semibold hover:bg-white hover:text-[#2a242b] transition">
+                    Shop Now
+                </a>
+            </div>
+
+            {{-- Phone visual (kanan) --}}
+            <div class="absolute inset-y-0 right-0 hidden md:block">
+                <div class="h-full w-[420px] bg-[radial-gradient(80%_80%_at_70%_30%,rgba(255,255,255,.06),transparent_60%)]"></div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ======================================================= --}}
+    {{-- |           BAGIAN 2: BROWSE BY CATEGORY            | --}}
+    {{-- ======================================================= --}}
+    <section class="my-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Browse By Category</h3>
+            <div class="flex items-center gap-2">
+                <button id="cat-prev" class="grid h-9 w-9 place-items-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40" aria-label="Scroll left">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button id="cat-next" class="grid h-9 w-9 place-items-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50" aria-label="Scroll right">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+      
+        <div id="cat-track" class="mt-5 flex gap-4 overflow-x-auto snap-x scroll-smooth" style="scrollbar-width: none; -ms-overflow-style: none;">
+            <style>#cat-track::-webkit-scrollbar { display: none; }</style>
+
+            {{-- Kartu statis untuk "All Products" --}}
+            <a href="{{ route('catalog') }}" class="min-w-[210px] snap-start group rounded-xl border border-gray-200 bg-white p-4 text-center hover:shadow-card transition">
+                <div class="mx-auto mb-3 h-28 w-28 overflow-hidden rounded-lg bg-gray-50 ring-1 ring-gray-200">
+                    <img src="{{ asset('images/carts.jpg') }}" alt="All Products" class="h-full w-full object-cover" loading="lazy" />
+                </div>
+                <div class="text-base font-semibold text-gray-700">All Products</div>
+            </a>
+
+            {{-- Loop dinamis untuk setiap kategori dari database --}}
+            @foreach ($categories as $category)
+                @php
+                    $groupSlug = str_replace('-fashion', '', $category->slug);
+                @endphp
+                <a href="{{ route('catalog', ['group' => $groupSlug]) }}" class="min-w-[210px] snap-start group rounded-xl border border-gray-200 bg-white p-4 text-center hover:shadow-card transition">
+                    <div class="mx-auto mb-3 h-28 w-28 overflow-hidden rounded-lg bg-gray-50 ring-1 ring-gray-200">
+                        <img src="{{ $category->image_url ?? asset('images/placeholder.jpg') }}" alt="{{ $category->name }}" class="h-full w-full object-cover" loading="lazy" />
+                    </div>
+                    <div class="text-base font-semibold text-gray-700">{{ $category->name }}</div>
+                </a>
+            @endforeach
+        </div>
+    </section>
+
+    {{-- ======================================================= --}}
+    {{-- |          BAGIAN 3: PRODUCT GRID TABS              | --}}
+    {{-- ======================================================= --}}
+    <section class="my-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {{-- Tabs --}}
+        <div class="flex items-center gap-6 border-b border-gray-200">
+            <button type="button" class="tab-button relative text-lg pb-3 font-semibold text-gray-900 after:absolute after:inset-x-0 after:-bottom-[1px] after:h-0.5 after:bg-gray-900" data-tab="new-arrival">
+                New Arrival
+            </button>
+            <button type="button" class="tab-button pb-3 text-lg text-gray-500 hover:text-gray-900" data-tab="bestseller">
+                Bestseller
+            </button>
+        </div>
+
+        {{-- Konten Tab "New Arrival" --}}
+        <div id="tab-content-new-arrival" class="tab-content mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            @forelse ($newArrivals as $product)
+                {{-- Card Produk --}}
+                <a href="{{ route('product.detail', $product->slug) }}" class="group relative rounded-xl border border-gray-200 bg-white p-4 hover:shadow-card transition">
+                    <div class="aspect-[4/3] overflow-hidden rounded-xl bg-gray-100 ring-1 ring-gray-200">
+                        <img src="{{ $product->images[0] ?? asset('images/placeholder.jpg') }}" alt="{{ $product->name }}" class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    </div>
+                    <div class="mt-3 space-y-1">
+                        <p class="line-clamp-2 text-lg font-bold text-gray-900">{{ $product->name }}</p>
+                        <p class="text-[15px] font-bold">Rp{{ number_format($product->price) }}</p> 
+                    </div>
+                </a>
+            @empty
+                <div class="col-span-full text-center py-8 text-gray-500"><p>Produk baru akan segera hadir!</p></div>
+            @endforelse
+        </div>
+
+        {{-- Konten Tab "Bestseller" --}}
+        <div id="tab-content-bestseller" class="tab-content mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" style="display: none;">
+            @forelse ($bestsellers as $product)
+                {{-- Card Produk --}}
+                <a href="{{ route('product.detail', $product->slug) }}" class="group relative rounded-xl border border-gray-200 bg-white p-4 hover:shadow-card transition">
+                    <div class="aspect-[4/3] overflow-hidden rounded-xl bg-gray-100 ring-1 ring-gray-200">
+                        <img src="{{ $product->images[0] ?? asset('images/placeholder.jpg') }}" alt="{{ $product->name }}" class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    </div>
+                    <div class="mt-3 space-y-1">
+                        <p class="line-clamp-2 text-lg font-bold text-gray-900">{{ $product->name }}</p>
+                        <p class="text-[15px] font-bold">Rp{{ number_format($product->price) }}</p>
+                    </div>
+                </a>
+            @empty
+                <div class="col-span-full text-center py-8 text-gray-500"><p>Belum ada produk bestseller.</p></div>
+            @endforelse
+        </div>
+
+        <div class="mt-8 flex justify-center">
+            <a href="{{ route('catalog') }}" class="inline-flex h-10 items-center justify-center rounded-md border border-gray-300 bg-white px-5 text-sm font-semibold hover:bg-gray-50">
+                View All
+            </a>
+        </div>
+    </section>
+
+@endsection
