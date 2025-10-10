@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -19,7 +21,7 @@ use App\Http\Controllers\OrderController;
  */
 Route::get('/', function () {
     // Mengarahkan ke view 'welcome.blade.php' atau 'beranda.blade.php'
-    return view('Checkout'); 
+    return view('checkout'); 
 });
 
 /**
@@ -33,3 +35,6 @@ Route::get('/pencarian', [SearchController::class, 'index'])->name('search.resul
  * Mengarah ke fungsi 'index' di dalam OrderController.
  */
 Route::get('/pesanan-saya', [OrderController::class, 'index'])->name('orders.index');
+Route::resource('products', ProductController::class);
+// Route ini akan menangani URL seperti http://127.0.0.1:8000/search
+Route::get('/search', [SearchController::class, 'index'])->name('search');

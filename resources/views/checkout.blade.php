@@ -181,8 +181,8 @@
                                 </h5>
                                 
                                 <div class="row mb-4">
-                                    <div class="col-md-6">
-                                        <div class="form-check p-3 border rounded">
+                                    <div class="col-md-4 mb-3">
+                                        <div class="form-check p-3 border rounded h-100">
                                             <input class="form-check-input" type="radio" name="payment_method" 
                                                    id="cod" value="cod" checked>
                                             <label class="form-check-label" for="cod">
@@ -192,8 +192,8 @@
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="form-check p-3 border rounded">
+                                    <div class="col-md-4 mb-3">
+                                        <div class="form-check p-3 border rounded h-100">
                                             <input class="form-check-input" type="radio" name="payment_method" 
                                                    id="transfer" value="transfer">
                                             <label class="form-check-label" for="transfer">
@@ -203,8 +203,18 @@
                                             </label>
                                         </div>
                                     </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="form-check p-3 border rounded h-100">
+                                            <input class="form-check-input" type="radio" name="payment_method" 
+                                                   id="qris" value="qris">
+                                            <label class="form-check-label" for="qris">
+                                                <i class="fas fa-qrcode text-info me-2"></i>
+                                                <strong>QRIS</strong>
+                                                <br><small class="text-muted">Bayar dengan scan QR code</small>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
-
                                 <h5 class="section-header">
                                     <i class="fas fa-sticky-note text-info me-2"></i>
                                     Catatan Pesanan
@@ -351,7 +361,29 @@
         </div>
     </div>
 
-
+    <div class="modal fade" id="qrisModal" tabindex="-1" aria-labelledby="qrisModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="qrisModalLabel"><i class="fas fa-qrcode me-2"></i>Selesaikan Pembayaran QRIS</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>Scan QR code di bawah ini untuk membayar pesanan Anda:</p>
+                    
+                    <img src="WhatsApp Image 2025-10-10 at 20.05.07.jpeg" alt="QRIS Code Toko Falih" class="img-fluid rounded mb-3" style="max-width: 250px;">
+                    
+                    <h5 class="mt-2">Total Pembayaran:</h5>
+                    <h4 id="qrisTotalAmount" class="text-danger fw-bold"></h4>
+                    
+                    <p class="text-muted small mt-3">Pesanan akan diproses secara otomatis setelah pembayaran berhasil.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">Saya Mengerti</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -399,20 +431,26 @@
                     // Simulate processing
                     setTimeout(() => {
                         const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+                        const totalAmount = document.querySelector('.total-amount').textContent.trim();
 
+                        // === PERUBAHAN LOGIKA JAVASCRIPT DIMULAI DI SINI ===
                         if (paymentMethod === 'transfer') {
                             const orderId = 'INV-' + Date.now();
-                            const totalAmount = document.querySelector('.total-amount').textContent.trim();
-                            
                             document.getElementById('transferOrderId').textContent = orderId;
                             document.getElementById('transferTotalAmount').textContent = totalAmount;
-
                             const transferModal = new bootstrap.Modal(document.getElementById('transferModal'));
                             transferModal.show();
+
+                        } else if (paymentMethod === 'qris') { // Logika baru untuk QRIS
+                            document.getElementById('qrisTotalAmount').textContent = totalAmount;
+                            const qrisModal = new bootstrap.Modal(document.getElementById('qrisModal'));
+                            qrisModal.show();
+                            
                         } else { // COD
                             const codModal = new bootstrap.Modal(document.getElementById('codSuccessModal'));
                             codModal.show();
                         }
+                        // === PERUBAHAN LOGIKA JAVASCRIPT SELESAI ===
 
                         // Add event listener to reset button when any modal is closed
                         document.querySelectorAll('.modal').forEach(modalEl => {
@@ -458,7 +496,7 @@
                     if (this.value === 'transfer' && !existingInfo) {
                         // Insert the info after the payment methods section
                         this.closest('.row.mb-4').insertAdjacentElement('afterend', transferInfoSection);
-                    } else if (this.value === 'cod' && existingInfo) {
+                    } else if (this.value !== 'transfer' && existingInfo) {
                         existingInfo.remove();
                     }
                 });
