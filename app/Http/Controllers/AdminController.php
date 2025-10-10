@@ -67,11 +67,24 @@ class AdminController extends Controller
             'stock' => 'required|integer',
             'is_active' => 'required|boolean',
             'image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validasi 'image_file'
+            'description' => 'nullable|string',
+            'image_url' => 'nullable|string',
+            'slug' => 'nullable|string',
         ]);
 
         // 2. Ambil atau Buat Model Product
         $produk = $request->id ? Product::find($request->id) : new Product;
 
+        $data = $request->only([
+            'name',
+            'category_id',
+            'price',
+            'stock',
+            'is_active',
+            'description', // <-- PASTIKAN INI DIAMBIL DARI REQUEST
+            'image_url',
+            'slug'
+        ]);
         // 3. Proses upload IMAGE
         // Ambil path lama (disimpan di kolom 'image' DB)
         $path_gambar = $produk->image ?? null; 
@@ -104,7 +117,10 @@ class AdminController extends Controller
         $produk->price = $request->price;     
         $produk->stock = $request->stock;     
         $produk->is_active = $request->is_active; // Tambahkan is_active
-        $produk->image = $path_gambar;        // Menyimpan path ke kolom 'image' di database
+        $produk->image = $path_gambar;
+        $produk->description = $request->description;        // Menyimpan deskripsi ke kolom 'description' di database
+        // $produk->image_url = $request->image_url;            // Menyimpan URL gambar ke kolom 'image_url' di database
+        // $produk->slug = $request->slug;                      // Menyimpan slug ke kolom 'slug' di database
 
         $produk->save();
 

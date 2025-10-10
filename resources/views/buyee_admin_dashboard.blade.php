@@ -479,6 +479,10 @@ body {
                         <div id="image-preview" class="mt-2"></div>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Deskripsi Produk</label>
+                        <textarea class="form-control" id="productDescription" name="description" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Status</label>
                         <select class="form-select" id="productStatus" name="is_active">
                             <option value="1">Aktif</option>
@@ -727,6 +731,7 @@ async function editProduct(id) {
         document.getElementById('productStock').value = data.stock;
         document.getElementById('productStatus').value = data.is_active;
 
+        document.getElementById('productDescription').value = data.description || ''; 
         const previewDiv = document.getElementById('image-preview');
         if (data.image) {
             const imageUrl = `/${data.image}`; // Path dari root public

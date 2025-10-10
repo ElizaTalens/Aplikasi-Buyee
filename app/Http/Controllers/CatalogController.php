@@ -24,6 +24,6 @@ class CatalogController extends Controller
     public function show($id)
     {
         $product = Product::with('category')->findOrFail($id);
-        return view('product-detail', compact('product'));
+        return view('pages.product-detail', compact('product'));
     }
 }

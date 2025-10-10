@@ -192,8 +192,4 @@
   @include('layouts.footer')
 
 </body>
-<<<<<<< HEAD
 </html>
-=======
-</html>
->>>>>>> 3efa58752c39911d4116c99d961d7d5bbb85d307
