@@ -2,29 +2,71 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
-    use HasFactory;
-
-    // Hapus baris ini jika kamu memang pakai konvensi default "products"
-    protected $table = 'products';
-
-    // Gabungan field dari kedua versi (silakan sesuaikan dengan kolom database-mu)
     protected $fillable = [
         'name',
-        'category_id',
-        'price',
-        'stock',
-        'is_active',
-        'image_url',
         'slug',
+        'description',
+        'short_description',
+        'price',
+        'sale_price',
+        'sku',
+        'stock_quantity',
+        'images',
+        'attributes',
+        'category_id',
+        'is_active',
+        'is_featured',
+        'weight',
+        'dimensions',
     ];
 
-    public function category()
+    protected $casts = [
+        'images' => 'array',
+        'attributes' => 'array',
+        'price' => 'decimal:2',
+        'sale_price' => 'decimal:2',
+        'weight' => 'decimal:2',
+        'is_active' => 'boolean',
+        'is_featured' => 'boolean',
+    ];
+
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    public function getDiscountPercentageAttribute(): ?float
+    {
+        if ($this->sale_price && $this->price > $this->sale_price) {
+            return round((($this->price - $this->sale_price) / $this->price) * 100, 2);
+        }
+        return null;
+    }
+
+    public function getFinalPriceAttribute(): float
+    {
+        return $this->sale_price ?? $this->price;
     }
 }
