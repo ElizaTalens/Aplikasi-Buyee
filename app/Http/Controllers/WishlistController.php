@@ -10,6 +10,9 @@ use Illuminate\View\View;
 
 class WishlistController extends Controller
 {
+    /**
+     * Menampilkan halaman wishlist pengguna.
+     */
     public function index(): View
     {
         $wishlistItems = Wishlist::with('product') 
@@ -20,34 +23,92 @@ class WishlistController extends Controller
         return view('pages.wishlist', compact('wishlistItems'));
     }
 
-    public function store(Request $request): JsonResponse
+    /**
+     * Menambah atau menghapus item dari wishlist (fungsi toggle).
+     */
+    public function toggle(Request $request): JsonResponse
     {
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-        ]);
+        $request->validate(['product_id' => 'required|exists:products,id']);
 
         $userId = Auth::id();
         $productId = $request->product_id;
 
-        $wishlistItem = Wishlist::where('user_id', $userId) // <-- GANTI INI
-                                     ->where('product_id', $productId)
-                                     ->first();
+        // Cari item wishlist berdasarkan user dan produk
+        $wishlistItem = Wishlist::where('user_id', $userId)
+                                ->where('product_id', $productId)
+                                ->first();
 
         if ($wishlistItem) {
+            // Jika item ada, hapus
             $wishlistItem->delete();
             $action = 'removed';
+            $message = 'Produk berhasil dihapus dari wishlist.';
         } else {
-            Wishlist::create([ // <-- GANTI INI
+            // Jika tidak ada, buat baru
+            Wishlist::create([
                 'user_id' => $userId,
                 'product_id' => $productId,
             ]);
             $action = 'added';
+            $message = 'Produk berhasil ditambahkan ke wishlist!';
         }
         
+        // Kembalikan respons yang informatif
         return response()->json([
-            'message' => 'Wishlist updated successfully.',
+            'message' => $message,
             'action' => $action,
-            'count' => Wishlist::where('user_id', $userId)->count() // <-- GANTI INI
+            'count' => Wishlist::where('user_id', $userId)->count()
         ]);
+    }
+
+    /**
+     * Memeriksa apakah sebuah produk ada di wishlist pengguna.
+     */
+    public function check(Request $request): JsonResponse
+    {
+        $request->validate(['product_id' => 'required|exists:products,id']);
+
+        $inWishlist = Wishlist::where('user_id', Auth::id())
+                              ->where('product_id', $request->product_id)
+                              ->exists(); // exists() lebih efisien daripada first() atau count()
+
+        return response()->json(['in_wishlist' => $inWishlist]);
+    }
+
+    /**
+     * Menghapus item berdasarkan ID unik wishlist.
+     */
+    public function destroy(string $id): JsonResponse
+    {
+        // findOrFail akan otomatis memberikan error 404 jika tidak ditemukan
+        $wishlistItem = Wishlist::where('user_id', Auth::id())->findOrFail($id);
+        $wishlistItem->delete();
+
+        return response()->json([
+            'message' => 'Item berhasil dihapus dari wishlist.',
+            'count' => Wishlist::where('user_id', Auth::id())->count()
+        ]);
+    }
+
+    /**
+     * Menghapus semua item dari wishlist pengguna.
+     */
+    public function clear(): JsonResponse
+    {
+        $deletedCount = Wishlist::where('user_id', Auth::id())->delete();
+
+        return response()->json([
+            'message' => "Berhasil menghapus {$deletedCount} item dari wishlist.",
+            'count' => 0
+        ]);
+    }
+
+    /**
+     * Mendapatkan jumlah item di wishlist.
+     */
+    public function count(): JsonResponse
+    {
+        $count = Auth::check() ? Wishlist::where('user_id', Auth::id())->count() : 0;
+        return response()->json(['count' => $count]);
     }
 }

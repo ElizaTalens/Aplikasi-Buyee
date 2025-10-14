@@ -107,15 +107,11 @@
 
             <div class="remember">
                 <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                <label for="remember">ingat saya</label>
+                <label for="remember">Ingat saya</label>
             </div>
 
             <button type="submit" class="login-btn">Masuk</button>
         </form>
-
-        <a href="#" class="forgot" onclick="alert('Fitur lupa kata sandi belum tersedia')">
-            lupa kata sandi?
-        </a>
 
         <div class="terms">
             Dengan masuk, Saya setuju dengan Syarat & Ketentuan serta Kebijakan Privasi Buyee

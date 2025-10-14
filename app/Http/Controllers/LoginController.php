@@ -34,14 +34,41 @@ class LoginController extends Controller
         // di dalam metode login()
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
+            
+            // Ambil user yang baru login
+            $user = $request->user();
+            
+            // Log untuk debugging
+            \Log::info('User login berhasil', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'role' => $user->role,
+                'intended_role' => $request->role
+            ]);
 
-            if ($request->user()->role === 'admin') {
-                return redirect()->route('admin.dashboard');
-            } else { // Ini akan menangani role 'user'
-                return redirect()->route('home');
+            // Pastikan role user sesuai dengan role yang dipilih di form
+            if ($user->role !== $request->role) {
+                Auth::logout();
+                return back()->withErrors([
+                    'role' => 'Role yang dipilih tidak sesuai dengan akun Anda.',
+                ])->onlyInput('email', 'role');
+            }
+
+            // Redirect berdasarkan role dengan pengecekan yang lebih ketat
+            if ($user->role === 'admin') {
+                \Log::info('Admin login - redirecting to dashboard', ['user_id' => $user->id]);
+                return redirect()->intended(route('admin.page.dashboard'));
+            } else if ($user->role === 'user') {
+                \Log::info('User login - redirecting to home', ['user_id' => $user->id]);
+                return redirect()->intended(route('home'));
+            } else {
+                // Jika role tidak dikenali, logout dan error
+                Auth::logout();
+                return back()->withErrors([
+                    'role' => 'Role tidak valid.',
+                ])->onlyInput('email', 'role');
             }
         }
-
 
         // Gagal login
         return back()->withErrors([
@@ -55,6 +82,6 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login.form');
+        return redirect()->route('login');
     }
 }

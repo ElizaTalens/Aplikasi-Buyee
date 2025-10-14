@@ -7,7 +7,7 @@
     {{-- ======================================================= --}}
     {{-- |                BAGIAN 1: HERO BANNER                | --}}
     {{-- ======================================================= --}}
-    <section class="mx-auto max-w-7xl pt-10">
+    <section class="mx-auto max-w-7xl">
         <div class="relative overflow-hidden rounded-2xl bg-[#2a242b] p-10 text-white min-h-[360px] flex items-center">
             {{-- Text --}}
             <div class="max-w-xl">
@@ -90,15 +90,17 @@
         <div id="tab-content-new-arrival" class="tab-content mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             @forelse ($newArrivals as $product)
                 {{-- Card Produk --}}
-                <a href="{{ route('product.detail', $product->slug) }}" class="group relative rounded-xl border border-gray-200 bg-white p-4 hover:shadow-card transition">
-                    <div class="aspect-[4/3] overflow-hidden rounded-xl bg-gray-100 ring-1 ring-gray-200">
-                        <img src="{{ $product->images[0] ?? asset('images/placeholder.jpg') }}" alt="{{ $product->name }}" class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300">
-                    </div>
-                    <div class="mt-3 space-y-1">
-                        <p class="line-clamp-2 text-lg font-bold text-gray-900">{{ $product->name }}</p>
-                        <p class="text-[15px] font-bold">Rp{{ number_format($product->price) }}</p> 
-                    </div>
-                </a>
+                <div class="group relative rounded-xl border border-gray-200 bg-white p-4 hover:shadow-card transition">
+                    <a href="{{ route('product.detail', $product->slug) }}" class="block">
+                        <div class="aspect-[4/3] overflow-hidden rounded-xl bg-gray-100 ring-1 ring-gray-200">
+                            <img src="{{ isset($product->images[0]) ? asset('storage/' . $product->images[0]) : asset('images/placeholder.jpg') }}" alt="{{ $product->name }}" class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        </div>
+                        <div class="mt-3 space-y-1">
+                            <p class="line-clamp-2 text-lg font-bold text-gray-900">{{ $product->name }}</p>
+                            <p class="text-[15px] font-bold">Rp{{ number_format($product->price) }}</p> 
+                        </div>
+                    </a>
+                </div>
             @empty
                 <div class="col-span-full text-center py-8 text-gray-500"><p>Produk baru akan segera hadir!</p></div>
             @endforelse
@@ -108,15 +110,28 @@
         <div id="tab-content-bestseller" class="tab-content mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" style="display: none;">
             @forelse ($bestsellers as $product)
                 {{-- Card Produk --}}
-                <a href="{{ route('product.detail', $product->slug) }}" class="group relative rounded-xl border border-gray-200 bg-white p-4 hover:shadow-card transition">
-                    <div class="aspect-[4/3] overflow-hidden rounded-xl bg-gray-100 ring-1 ring-gray-200">
-                        <img src="{{ $product->images[0] ?? asset('images/placeholder.jpg') }}" alt="{{ $product->name }}" class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300">
-                    </div>
-                    <div class="mt-3 space-y-1">
-                        <p class="line-clamp-2 text-lg font-bold text-gray-900">{{ $product->name }}</p>
-                        <p class="text-[15px] font-bold">Rp{{ number_format($product->price) }}</p>
-                    </div>
-                </a>
+                <div class="group relative rounded-xl border border-gray-200 bg-white p-4 hover:shadow-card transition">
+                    {{-- Wishlist Button --}}
+                    @auth
+                    <button type="button" 
+                            class="wishlist-btn absolute top-4 right-4 z-10 grid h-8 w-8 place-items-center rounded-full bg-black/10 text-white backdrop-blur-sm transition hover:bg-black/20" 
+                            data-product-id="{{ $product->id }}" 
+                            title="Add to Wishlist"
+                            onclick="toggleWishlist({{ $product->id }}, this)">
+                        <i class="fa-regular fa-heart"></i>
+                    </button>
+                    @endauth
+                    
+                    <a href="{{ route('product.detail', $product->slug) }}" class="block">
+                        <div class="aspect-[4/3] overflow-hidden rounded-xl bg-gray-100 ring-1 ring-gray-200">
+                            <img src="{{ isset($product->images[0]) ? asset('storage/' . $product->images[0]) : asset('images/placeholder.jpg') }}" alt="{{ $product->name }}" class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        </div>
+                        <div class="mt-3 space-y-1">
+                            <p class="line-clamp-2 text-lg font-bold text-gray-900">{{ $product->name }}</p>
+                            <p class="text-[15px] font-bold">Rp{{ number_format($product->price) }}</p>
+                        </div>
+                    </a>
+                </div>
             @empty
                 <div class="col-span-full text-center py-8 text-gray-500"><p>Belum ada produk bestseller.</p></div>
             @endforelse

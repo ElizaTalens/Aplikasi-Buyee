@@ -1,507 +1,561 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - UMKM Mini-Commerce</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .checkout-container {
-            background: #fff0f5;
-            min-height: 100vh;
-            padding: 2rem 0;
-        }
-        
-        .checkout-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            border: none;
-        }
-        
-        .section-header {
-            color: #2c3e50;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #e9ecef;
-        }
-        
-        .cart-item {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border: 1px solid #e9ecef;
-        }
-        
-        .product-image {
-            width: 60px;
-            height: 60px;
-            border-radius: 6px;
-            background: #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #666;
-        }
-        
-        .summary-card {
-            background: linear-gradient(135deg, #f5459dff 0%, #f8a9c2 100%);
-            color: white;
-            border-radius: 12px;
-        }
-        
-        .btn-checkout {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            border: none;
-            padding: 0.8rem 2rem;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-checkout:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
-        }
-        
-        .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-        
-        .alert-info {
-            background: linear-gradient(135deg, #f8a9c2 0%, #f5459dff 100%);
-            border: none;
-            color: white;
-        }
+@extends('layouts.master')
 
-        .modal-header {
-            background: linear-gradient(135deg, #f5459dff 0%, #f8a9c2 100%);
-            color: white;
-        }
+@section('title', 'Checkout — Buyee')
 
-        .modal-header .btn-close {
-            filter: invert(1) grayscale(100%) brightness(200%);
-        }
-    </style>
-</head>
-<body>
-    <div class="checkout-container">
-        <div class="container">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="d-flex align-items-center mb-3">
-                        <a href="cart.php" class="btn btn-outline-secondary me-3">
-                            <i class="fas fa-arrow-left"></i> Kembali
-                        </a>
-                        <h2 class="mb-0">
-                            <i class="fas fa-credit-card text-primary me-2"></i>
-                            Checkout Pesanan
-                        </h2>
-                    </div>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Pastikan data pesanan dan alamat pengiriman sudah benar sebelum melanjutkan.
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-lg-8">
-                    <div class="card checkout-card mb-4">
-                        <div class="card-body p-4">
-                            <form id="checkoutForm" method="POST" action="process_checkout.php">
-                                <h5 class="section-header">
-                                    <i class="fas fa-user text-primary me-2"></i>
-                                    Data Pelanggan
-                                </h5>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Nama Lengkap *</label>
-                                        <input type="text" class="form-control" name="customer_name" 
-                                               value="John Doe" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Email *</label>
-                                        <input type="email" class="form-control" name="customer_email" 
-                                               value="john@example.com" required>
-                                    </div>
-                                </div>
-                                
-                                <div class="row mb-4">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Nomor Telepon *</label>
-                                        <input type="tel" class="form-control" name="customer_phone" 
-                                               placeholder="08xxxxxxxxxx" required>
-                                    </div>
-                                </div>
-
-                                <h5 class="section-header">
-                                    <i class="fas fa-map-marker-alt text-success me-2"></i>
-                                    Alamat Pengiriman
-                                </h5>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Alamat Lengkap *</label>
-                                    <textarea class="form-control" name="shipping_address" rows="3" 
-                                              placeholder="Jalan, Nomor Rumah, RT/RW" required></textarea>
-                                </div>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <label class="form-label">Kota *</label>
-                                        <input type="text" class="form-control" name="city" 
-                                               placeholder="Nama Kota" required>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Provinsi *</label>
-                                        <select class="form-select" name="province" required>
-                                            <option value="">Pilih Provinsi</option>
-                                            <option value="Jawa Tengah">Jawa Tengah</option>
-                                            <option value="Jawa Barat">Jawa Barat</option>
-                                            <option value="Jawa Timur">Jawa Timur</option>
-                                            <option value="DKI Jakarta">DKI Jakarta</option>
-                                            <option value="Yogyakarta">Yogyakarta</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Kode Pos *</label>
-                                        <input type="text" class="form-control" name="postal_code" 
-                                               placeholder="12345" maxlength="5" required>
-                                    </div>
-                                </div>
-
-                                <h5 class="section-header">
-                                    <i class="fas fa-money-check text-warning me-2"></i>
-                                    Metode Pembayaran
-                                </h5>
-                                
-                                <div class="row mb-4">
-                                    <div class="col-md-4 mb-3">
-                                        <div class="form-check p-3 border rounded h-100">
-                                            <input class="form-check-input" type="radio" name="payment_method" 
-                                                   id="cod" value="cod" checked>
-                                            <label class="form-check-label" for="cod">
-                                                <i class="fas fa-truck text-success me-2"></i>
-                                                <strong>Cash On Delivery (COD)</strong>
-                                                <br><small class="text-muted">Bayar saat barang diterima</small>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <div class="form-check p-3 border rounded h-100">
-                                            <input class="form-check-input" type="radio" name="payment_method" 
-                                                   id="transfer" value="transfer">
-                                            <label class="form-check-label" for="transfer">
-                                                <i class="fas fa-university text-primary me-2"></i>
-                                                <strong>Transfer Bank</strong>
-                                                <br><small class="text-muted">Transfer ke rekening toko</small>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <div class="form-check p-3 border rounded h-100">
-                                            <input class="form-check-input" type="radio" name="payment_method" 
-                                                   id="qris" value="qris">
-                                            <label class="form-check-label" for="qris">
-                                                <i class="fas fa-qrcode text-info me-2"></i>
-                                                <strong>QRIS</strong>
-                                                <br><small class="text-muted">Bayar dengan scan QR code</small>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <h5 class="section-header">
-                                    <i class="fas fa-sticky-note text-info me-2"></i>
-                                    Catatan Pesanan
-                                </h5>
-                                
-                                <div class="mb-3">
-                                    <textarea class="form-control" name="order_notes" rows="3" 
-                                              placeholder="Catatan tambahan untuk penjual (opsional)"></textarea>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4">
-                    <div class="card checkout-card">
-                        <div class="card-body summary-card p-4">
-                            <h5 class="section-header text-white border-bottom border-light">
-                                <i class="fas fa-shopping-cart me-2"></i>
-                                Ringkasan Pesanan
-                            </h5>
-                            
-                            <div class="cart-items mb-4">
-                                <div class="cart-item bg-white text-dark">
-                                    <div class="d-flex align-items-center">
-                                        <div class="product-image me-3">
-                                            <i class="fas fa-image"></i>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h6 class="mb-1">Kaos Polos Premium</h6>
-                                            <small class="text-muted">Kategori: Fashion</small>
-                                            <div class="d-flex justify-content-between mt-1">
-                                                <span>2 x Rp 75.000</span>
-                                                <strong>Rp 150.000</strong>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="cart-item bg-white text-dark">
-                                    <div class="d-flex align-items-center">
-                                        <div class="product-image me-3">
-                                            <i class="fas fa-image"></i>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h6 class="mb-1">Sepatu Sneakers</h6>
-                                            <small class="text-muted">Kategori: Footwear</small>
-                                            <div class="d-flex justify-content-between mt-1">
-                                                <span>1 x Rp 250.000</span>
-                                                <strong>Rp 250.000</strong>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="border-top border-light pt-3">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Subtotal:</span>
-                                    <span>Rp 400.000</span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Ongkos Kirim:</span>
-                                    <span>Rp 15.000</span>
-                                </div>
-                                <hr class="border-light">
-                                <div class="d-flex justify-content-between mb-4">
-                                    <strong class="h5">Total:</strong>
-                                    <strong class="h5 total-amount">Rp 415.000</strong>
-                                </div>
-                                
-                                <button type="submit" form="checkoutForm" class="btn btn-checkout btn-success w-100 btn-lg">
-                                    <i class="fas fa-check me-2"></i>
-                                    Buat Pesanan
-                                </button>
-                                
-                                <div class="text-center mt-3">
-                                    <small class="text-light">
-                                        <i class="fas fa-shield-alt me-1"></i>
-                                        Pesanan Anda aman dan terjamin
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+@section('content')
+<main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-24">
+  <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div class="flex items-center gap-3">
+        <a href="{{ route('cart.index') }}"
+           class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-gray-50">
+          <i class="fa-solid fa-arrow-left text-xs"></i>
+          Kembali ke Keranjang
+        </a>
+        <h1 class="text-3xl font-extrabold text-gray-900">Checkout Pesanan</h1>
+      </div>
+      <p class="text-sm text-gray-500">Langkah terakhir sebelum barang favoritmu dikirim.</p>
     </div>
 
-    <div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="transferModalLabel"><i class="fas fa-hourglass-half me-2"></i>Status Pembayaran</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="text-center mb-3">
-                        <i class="fas fa-check-circle text-success fa-3x"></i>
-                        <h5 class="mt-2">Pesanan Berhasil Dibuat!</h5>
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      {{-- Form Checkout --}}
+      <section class="lg:col-span-2">
+        <form id="checkoutForm"
+              action="{{ route('checkout.store') }}"
+              method="POST"
+              class="space-y-10">
+          @csrf
+
+          {{-- Data Pelanggan --}}
+          <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+            <div class="flex items-center gap-3">
+              <span class="grid h-10 w-10 place-items-center rounded-full bg-pink-100 text-pink-600">
+                <i class="fa-solid fa-user"></i>
+              </span>
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">Data Pelanggan</h2>
+                <p class="text-sm text-gray-500">Informasi ini memudahkan kami menghubungimu.</p>
+              </div>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
+              <label class="flex flex-col gap-2">
+                <span class="text-sm font-medium text-gray-700">Nama Lengkap *</span>
+                <input type="text"
+                       name="customer_name"
+                       required
+                       value="{{ old('customer_name', 'John Doe') }}"
+                       class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-200/60">
+              </label>
+              <label class="flex flex-col gap-2">
+                <span class="text-sm font-medium text-gray-700">Email *</span>
+                <input type="email"
+                       name="customer_email"
+                       required
+                       value="{{ old('customer_email', 'john@example.com') }}"
+                       class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-200/60">
+              </label>
+              <label class="md:col-span-2 flex flex-col gap-2">
+                <span class="text-sm font-medium text-gray-700">Nomor Telepon *</span>
+                <input type="tel"
+                       name="customer_phone"
+                       required
+                       placeholder="08xxxxxxxxxx"
+                       class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-200/60">
+              </label>
+            </div>
+          </div>
+
+          {{-- Alamat Pengiriman --}}
+          <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+            <div class="flex items-center gap-3">
+              <span class="grid h-10 w-10 place-items-center rounded-full bg-pink-100 text-pink-600">
+                <i class="fa-solid fa-location-dot"></i>
+              </span>
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">Alamat Pengiriman</h2>
+                <p class="text-sm text-gray-500">Isi sesuai lokasi pengiriman pesanan.</p>
+              </div>
+            </div>
+
+            <div class="mt-6 flex flex-col gap-5">
+              <label class="flex flex-col gap-2">
+                <span class="text-sm font-medium text-gray-700">Alamat Lengkap *</span>
+                <textarea name="shipping_address"
+                          rows="3"
+                          required
+                          placeholder="Nama jalan, nomor rumah, RT/RW, detail lain"
+                          class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-200/60"></textarea>
+              </label>
+
+              <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+                <label class="flex flex-col gap-2">
+                  <span class="text-sm font-medium text-gray-700">Kota *</span>
+                  <input type="text"
+                         name="city"
+                         required
+                         placeholder="Nama kota"
+                         class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-200/60">
+                </label>
+                <label class="flex flex-col gap-2">
+                  <span class="text-sm font-medium text-gray-700">Provinsi *</span>
+                  <select name="province"
+                          required
+                          class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-200/60">
+                    <option value="">Pilih Provinsi</option>
+                    @foreach (['Jawa Tengah', 'Jawa Barat', 'Jawa Timur', 'DKI Jakarta', 'Yogyakarta'] as $province)
+                      <option value="{{ $province }}">{{ $province }}</option>
+                    @endforeach
+                  </select>
+                </label>
+                <label class="flex flex-col gap-2">
+                  <span class="text-sm font-medium text-gray-700">Kode Pos *</span>
+                  <input type="text"
+                         name="postal_code"
+                         required
+                         maxlength="5"
+                         placeholder="12345"
+                         class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-200/60">
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {{-- Metode Pembayaran --}}
+          <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+            <div class="flex items-center gap-3">
+              <span class="grid h-10 w-10 place-items-center rounded-full bg-pink-100 text-pink-600">
+                <i class="fa-solid fa-credit-card"></i>
+              </span>
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">Metode Pembayaran</h2>
+                <p class="text-sm text-gray-500">Pilih cara pembayaran yang paling nyaman untukmu.</p>
+              </div>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              @php
+                $payments = [
+                  ['id' => 'cod', 'label' => 'Cash On Delivery', 'description' => 'Bayar saat pesanan tiba', 'icon' => 'fa-truck', 'accent' => 'text-green-500'],
+                  ['id' => 'transfer', 'label' => 'Transfer Bank', 'description' => 'Transfer ke rekening toko', 'icon' => 'fa-building-columns', 'accent' => 'text-blue-500'],
+                  ['id' => 'qris', 'label' => 'QRIS', 'description' => 'Scan QR code instan', 'icon' => 'fa-qrcode', 'accent' => 'text-purple-500'],
+                ];
+              @endphp
+
+              @foreach ($payments as $index => $payment)
+                <label class="relative flex cursor-pointer flex-col gap-3 rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm transition hover:border-pink-200 hover:shadow-md">
+                  <input type="radio"
+                         name="payment_method"
+                         value="{{ $payment['id'] }}"
+                         {{ $index === 0 ? 'checked' : '' }}
+                         class="peer absolute inset-0 h-full w-full cursor-pointer opacity-0">
+                  <div class="flex items-start gap-3">
+                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-pink-100 text-pink-600 transition peer-checked:bg-pink-500 peer-checked:text-white">
+                      <i class="fa-solid {{ $payment['icon'] }}"></i>
+                    </span>
+                    <div>
+                      <p class="text-sm font-semibold text-gray-900">{{ $payment['label'] }}</p>
+                      <p class="text-xs text-gray-500">{{ $payment['description'] }}</p>
                     </div>
-                    <p class="text-center">Silakan selesaikan pembayaran Anda untuk melanjutkan.</p>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Nomor Pesanan:
-                            <strong id="transferOrderId"></strong>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Total Pembayaran:
-                            <strong id="transferTotalAmount" class="text-danger"></strong>
-                        </li>
-                         <li class="list-group-item">
-                            <strong>Informasi Transfer:</strong><br>
-                            <small>Bank BCA: <strong>1234567890</strong><br>
-                            A.n: <strong>UMKM Mini-Commerce</strong></small>
-                        </li>
-                    </ul>
-                     <p class="text-muted text-center mt-3 small">Pesanan akan diproses setelah pembayaran dikonfirmasi.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">Saya Mengerti</button>
-                </div>
+                  </div>
+                  <span class="pointer-events-none absolute inset-0 hidden rounded-2xl border-2 border-pink-500/70 transition peer-checked:block"></span>
+                </label>
+              @endforeach
             </div>
-        </div>
-    </div>
 
-    <div class="modal fade" id="codSuccessModal" tabindex="-1" aria-labelledby="codSuccessModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="codSuccessModalLabel"><i class="fas fa-box-check me-2"></i>Pesanan Berhasil Dibuat</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <i class="fas fa-truck-fast text-success fa-3x mb-3"></i>
-                    <h5>Terima Kasih!</h5>
-                    <p>Pesanan Anda dengan metode <strong>Cash on Delivery (COD)</strong> telah kami terima dan akan segera kami proses. Mohon siapkan pembayaran tunai saat kurir tiba.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">Tutup</button>
-                </div>
+            <div id="transferInfo" class="mt-5 hidden rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-sm text-blue-800">
+              <p class="font-semibold text-blue-900">Informasi Transfer</p>
+              <ul class="mt-2 space-y-1 text-blue-800/90">
+                <li>Bank BCA — <span class="font-semibold">1234567890</span></li>
+                <li>Atas Nama — <span class="font-semibold">PT Buyee Indonesia</span></li>
+                <li>Kirim sesuai total pesanan dan unggah bukti melalui profilmu.</li>
+              </ul>
             </div>
-        </div>
-    </div>
+          </div>
 
-    <div class="modal fade" id="qrisModal" tabindex="-1" aria-labelledby="qrisModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="qrisModalLabel"><i class="fas fa-qrcode me-2"></i>Selesaikan Pembayaran QRIS</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <p>Scan QR code di bawah ini untuk membayar pesanan Anda:</p>
-                    
-                    <img src="WhatsApp Image 2025-10-10 at 20.05.07.jpeg" alt="QRIS Code Toko Falih" class="img-fluid rounded mb-3" style="max-width: 250px;">
-                    
-                    <h5 class="mt-2">Total Pembayaran:</h5>
-                    <h4 id="qrisTotalAmount" class="text-danger fw-bold"></h4>
-                    
-                    <p class="text-muted small mt-3">Pesanan akan diproses secara otomatis setelah pembayaran berhasil.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">Saya Mengerti</button>
-                </div>
+          {{-- Catatan --}}
+          <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+            <div class="flex items-center gap-3">
+              <span class="grid h-10 w-10 place-items-center rounded-full bg-pink-100 text-pink-600">
+                <i class="fa-solid fa-note-sticky"></i>
+              </span>
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">Catatan Pesanan</h2>
+                <p class="text-sm text-gray-500">Beritahu kami preferensimu (opsional).</p>
+              </div>
             </div>
+
+            <textarea name="order_notes"
+                      rows="3"
+                      placeholder="Contoh: Mohon kirimkan di jam kerja / Tolong hubungi sebelum sampai."
+                      class="mt-6 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition focus:border-pink-300 focus:outline-none focus:ring-4 focus:ring-pink-200/60"></textarea>
+          </div>
+        </form>
+      </section>
+
+      {{-- Ringkasan Pesanan --}}
+      <aside class="flex flex-col gap-6">
+        <div class="rounded-3xl bg-gradient-to-br from-pink-400 via-pink-500 to-pink-600 p-6 text-white shadow-lg shadow-pink-200">
+          <div class="flex items-center gap-3">
+            <span class="grid h-10 w-10 place-items-center rounded-full bg-white/20">
+              <i class="fa-solid fa-cart-shopping"></i>
+            </span>
+            <h2 class="text-lg font-semibold">Ringkasan Pesanan</h2>
+          </div>
+
+          <div class="mt-5 space-y-4">
+            @foreach($cartItems as $item)
+              <div class="rounded-2xl bg-white/90 p-4 text-gray-800 shadow-sm shadow-pink-200/50">
+                <div class="flex gap-3">
+                  <div class="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100 ring-1 ring-pink-100">
+                    @if($item->product->images && count($item->product->images) > 0)
+                      <img src="{{ asset('storage/' . $item->product->images[0]) }}"
+                           alt="{{ $item->product->name }}"
+                           class="h-full w-full object-cover">
+                    @else
+                      <div class="grid h-full w-full place-items-center text-sm text-gray-400">
+                        <i class="fa-regular fa-image"></i>
+                      </div>
+                    @endif
+                  </div>
+                  <div class="flex flex-1 flex-col">
+                    <p class="text-sm font-semibold text-gray-900">{{ $item->product->name }}</p>
+                    <p class="text-xs text-gray-500">{{ $item->product->category->name ?? 'Kategori tidak tersedia' }}</p>
+                    <div class="mt-2 flex items-center justify-between text-sm">
+                      <span class="text-gray-600">{{ $item->quantity }} × Rp {{ number_format($item->product->price, 0, ',', '.') }}</span>
+                      <span class="font-semibold text-gray-900">Rp {{ number_format($item->quantity * $item->product->price, 0, ',', '.') }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            @endforeach
+          </div>
+
+          <div class="mt-6 space-y-3 text-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-white/80">Subtotal</span>
+              <span class="font-medium">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
+            </div>
+            <div class="flex items-center justify-between rounded-2xl bg-white/15 px-4 py-3 text-base font-semibold">
+              <span>Total Pembayaran</span>
+              <span class="js-total-amount">Rp {{ number_format($total, 0, ',', '.') }}</span>
+            </div>
+            <p class="text-right text-xs text-white/70">Gratis ongkir untuk setiap pesanan.</p>
+          </div>
+          <div class="mt-6 space-y-3 text-xs text-white/80">
+          </div>
         </div>
+
+        <button type="submit"
+                form="checkoutForm"
+                id="checkoutSubmit"
+                class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-black px-6 py-4 text-base font-semibold text-white shadow-lg shadow-gray-900/20 transition hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-pink-400/40">
+          <span>Konfirmasi &amp; Buat Pesanan</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        <p class="text-center text-xs text-gray-500">Dengan menekan tombol di atas, kamu menyetujui syarat &amp; ketentuan Buyee.</p>
+      </aside>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const checkoutForm = document.getElementById('checkoutForm');
-            
-            // --- Form Submission Handler ---
-            checkoutForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // Basic validation
-                const requiredFields = this.querySelectorAll('[required]');
-                let isValid = true;
-                
-                requiredFields.forEach(field => {
-                    if (!field.value.trim()) {
-                        field.classList.add('is-invalid');
-                        isValid = false;
-                    } else {
-                        field.classList.remove('is-invalid');
-                    }
-                });
-                
-                // Phone validation
-                const phone = document.querySelector('[name="customer_phone"]');
-                const phoneRegex = /^08[0-9]{8,11}$/;
-                if (phone.value && !phoneRegex.test(phone.value)) {
-                    phone.classList.add('is-invalid');
-                    isValid = false;
-                }
-                
-                // Postal code validation
-                const postalCode = document.querySelector('[name="postal_code"]');
-                const postalRegex = /^[0-9]{5}$/;
-                if (postalCode.value && !postalRegex.test(postalCode.value)) {
-                    postalCode.classList.add('is-invalid');
-                    isValid = false;
-                }
-                
-                if (isValid) {
-                    const submitBtn = document.querySelector('button[form="checkoutForm"]');
-                    const originalText = submitBtn.innerHTML;
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
-                    
-                    // Simulate processing
-                    setTimeout(() => {
-                        const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
-                        const totalAmount = document.querySelector('.total-amount').textContent.trim();
+  </div>
+</main>
 
-                        // === PERUBAHAN LOGIKA JAVASCRIPT DIMULAI DI SINI ===
-                        if (paymentMethod === 'transfer') {
-                            const orderId = 'INV-' + Date.now();
-                            document.getElementById('transferOrderId').textContent = orderId;
-                            document.getElementById('transferTotalAmount').textContent = totalAmount;
-                            const transferModal = new bootstrap.Modal(document.getElementById('transferModal'));
-                            transferModal.show();
+{{-- Modal Transfer --}}
+<div id="modal-transfer" data-modal class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-gray-900/60" data-modal-close></div>
+  <div class="relative z-10 mx-auto mt-32 w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl">
+    <div class="flex items-start justify-between">
+      <div class="flex items-center gap-3">
+        <span class="grid h-11 w-11 place-items-center rounded-full bg-blue-100 text-blue-600">
+          <i class="fa-solid fa-building-columns"></i>
+        </span>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900">Selesaikan Pembayaran Transfer</h3>
+          <p class="text-sm text-gray-500">Gunakan informasi berikut untuk menyelesaikan pembayaranmu.</p>
+        </div>
+      </div>
+      <button type="button" class="text-gray-400 transition hover:text-gray-600" data-modal-close>
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="mt-6 space-y-4 rounded-2xl bg-gray-50 p-5">
+      <div class="flex items-center justify-between text-sm">
+        <span class="text-gray-500">Nomor Pesanan</span>
+        <span id="transferOrderId" class="font-semibold text-gray-900"></span>
+      </div>
+      <div class="flex items-center justify-between text-sm">
+        <span class="text-gray-500">Total Pembayaran</span>
+        <span id="transferTotalAmount" class="font-semibold text-gray-900"></span>
+      </div>
+      <div class="rounded-xl bg-white p-4 text-sm text-gray-700 shadow-sm">
+        <p class="font-semibold text-gray-900">Transfer ke:</p>
+        <p class="mt-2">Bank BCA • 1234567890</p>
+        <p>a.n PT Buyee Indonesia</p>
+      </div>
+    </div>
+    <p class="mt-6 text-sm text-gray-500">Unggah bukti transfer melalui halaman Riwayat Pesanan agar pesananmu diproses lebih cepat.</p>
+    <button type="button" class="mt-6 w-full rounded-full bg-blue-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-400/40" data-modal-close>
+      Saya Sudah Transfer
+    </button>
+  </div>
+</div>
 
-                        } else if (paymentMethod === 'qris') { // Logika baru untuk QRIS
-                            document.getElementById('qrisTotalAmount').textContent = totalAmount;
-                            const qrisModal = new bootstrap.Modal(document.getElementById('qrisModal'));
-                            qrisModal.show();
-                            
-                        } else { // COD
-                            const codModal = new bootstrap.Modal(document.getElementById('codSuccessModal'));
-                            codModal.show();
-                        }
-                        // === PERUBAHAN LOGIKA JAVASCRIPT SELESAI ===
+{{-- Modal COD --}}
+<div id="modal-cod" data-modal class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-gray-900/60" data-modal-close></div>
+  <div class="relative z-10 mx-auto mt-32 w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl">
+    <div class="flex items-start justify-between">
+      <div class="flex items-center gap-3">
+        <span class="grid h-11 w-11 place-items-center rounded-full bg-green-100 text-green-600">
+          <i class="fa-solid fa-truck-fast"></i>
+        </span>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900">Pesanan COD Dibuat</h3>
+          <p class="text-sm text-gray-500">Kurir kami akan menghubungimu sebelum pengantaran.</p>
+        </div>
+      </div>
+      <button type="button" class="text-gray-400 transition hover:text-gray-600" data-modal-close>
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <p class="mt-6 text-sm text-gray-600">Siapkan uang tunai sesuai total pesanan dan pastikan nomor teleponmu aktif agar kurir mudah menghubungi.</p>
+    <button type="button" class="mt-6 w-full rounded-full bg-green-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-400/40" data-modal-close>
+      Mengerti, Terima Kasih
+    </button>
+  </div>
+</div>
 
-                        // Add event listener to reset button when any modal is closed
-                        document.querySelectorAll('.modal').forEach(modalEl => {
-                            modalEl.addEventListener('hidden.bs.modal', () => {
-                                submitBtn.disabled = false;
-                                submitBtn.innerHTML = originalText;
-                                checkoutForm.reset();
-                            }, { once: true }); // 'once' ensures the event fires only one time
-                        });
+{{-- Modal QRIS --}}
+<div id="modal-qris" data-modal class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-gray-900/60" data-modal-close></div>
+  <div class="relative z-10 mx-auto mt-24 w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl">
+    <div class="flex items-start justify-between">
+      <div class="flex items-center gap-3">
+        <span class="grid h-11 w-11 place-items-center rounded-full bg-purple-100 text-purple-600">
+          <i class="fa-solid fa-qrcode"></i>
+        </span>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900">Scan QRIS untuk Membayar</h3>
+          <p class="text-sm text-gray-500">Gunakan aplikasi bank atau dompet digital favoritmu.</p>
+        </div>
+      </div>
+      <button type="button" class="text-gray-400 transition hover:text-gray-600" data-modal-close>
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="mt-6 flex flex-col items-center gap-4 rounded-2xl bg-gray-50 p-5">
+      <img src="{{ asset('images/placeholder.jpg') }}"
+           alt="QRIS Buyee"
+           class="h-56 w-56 rounded-2xl border border-gray-200 object-cover shadow-inner">
+      <div class="text-center">
+        <p class="text-sm text-gray-500">Total Pembayaran</p>
+        <p id="qrisTotalAmount" class="text-xl font-semibold text-gray-900"></p>
+      </div>
+    </div>
+    <p class="mt-6 text-sm text-gray-500">Pesanan diproses otomatis setelah pembayaran terdeteksi. Jika butuh bantuan, hubungi kami melalui menu Bantuan.</p>
+    <button type="button" class="mt-6 w-full rounded-full bg-purple-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-400/40" data-modal-close>
+      Saya Mengerti
+    </button>
+  </div>
+</div>
+@endsection
 
-                    }, 1500); // Shorter delay for better UX
-                } else {
-                    alert('Mohon lengkapi semua field yang wajib diisi dengan benar.');
-                }
-            });
-            
-            // --- Real-time Validation ---
-            document.querySelectorAll('input, select, textarea').forEach(field => {
-                field.addEventListener('input', function() {
-                    if (this.hasAttribute('required') && this.value.trim()) {
-                        this.classList.remove('is-invalid');
-                    }
-                });
-            });
+@push('scripts')
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const checkoutForm = document.getElementById('checkoutForm');
+    const submitBtn = document.getElementById('checkoutSubmit');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
-            // --- Dynamic Info for Bank Transfer ---
-            const paymentRadios = document.querySelectorAll('[name="payment_method"]');
-            const transferInfoSection = document.createElement('div');
-            transferInfoSection.id = 'transferInfo';
-            transferInfoSection.className = 'alert alert-secondary mt-3';
-            transferInfoSection.innerHTML = `
-                <strong>Informasi Transfer:</strong><br>
-                <small>Bank BCA: <strong>1234567890</strong><br>
-                A.n: <strong>UMKM Mini-Commerce</strong><br>
-                Silakan transfer sesuai total pesanan setelah membuat pesanan.</small>
-            `;
+    submitBtn.dataset.originalLabel = submitBtn.innerHTML;
 
-            paymentRadios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    const formBody = document.querySelector('#checkoutForm .card-body');
-                    const existingInfo = document.getElementById('transferInfo');
-                    
-                    if (this.value === 'transfer' && !existingInfo) {
-                        // Insert the info after the payment methods section
-                        this.closest('.row.mb-4').insertAdjacentElement('afterend', transferInfoSection);
-                    } else if (this.value !== 'transfer' && existingInfo) {
-                        existingInfo.remove();
-                    }
-                });
-            });
+    const modals = {
+      transfer: document.getElementById('modal-transfer'),
+      cod: document.getElementById('modal-cod'),
+      qris: document.getElementById('modal-qris'),
+    };
+
+    const transferInfo = document.getElementById('transferInfo');
+    const paymentRadios = document.querySelectorAll('input[name="payment_method"]');
+
+    const showToast = (message, type = 'success') => {
+      document.querySelectorAll('.app-toast').forEach(el => el.remove());
+      const toast = document.createElement('div');
+      toast.textContent = message;
+      toast.className = `app-toast fixed left-1/2 top-8 z-[9999] -translate-x-1/2 rounded-full px-5 py-2 text-sm font-semibold shadow-lg transition ${
+        type === 'success'
+          ? 'bg-emerald-500 text-white'
+          : 'bg-rose-500 text-white'
+      }`;
+      document.body.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+      });
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity .4s ease';
+      }, 2200);
+      setTimeout(() => toast.remove(), 2600);
+    };
+
+    const toggleTransferInfo = () => {
+      if (!transferInfo) return;
+      const selected = document.querySelector('input[name="payment_method"]:checked');
+      if (selected && selected.value === 'transfer') {
+        transferInfo.classList.remove('hidden');
+      } else {
+        transferInfo.classList.add('hidden');
+      }
+    };
+
+    paymentRadios.forEach(radio => radio.addEventListener('change', toggleTransferInfo));
+    toggleTransferInfo();
+
+    const closeModal = (modal) => {
+      modal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = submitBtn.dataset.originalLabel;
+
+      if (modal.dataset.resetForm === 'true') {
+        checkoutForm.reset();
+        toggleTransferInfo();
+      }
+
+      const redirectTarget = modal.dataset.redirect;
+      modal.dataset.redirect = '';
+      if (redirectTarget) {
+        window.location.href = redirectTarget;
+      }
+    };
+
+    document.querySelectorAll('[data-modal-close]').forEach(trigger => {
+      trigger.addEventListener('click', () => {
+        const modal = trigger.closest('[data-modal]');
+        if (modal) closeModal(modal);
+      });
+    });
+
+    const showModal = (key, redirectUrl = '') => {
+      const modal = modals[key];
+      if (!modal) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = submitBtn.dataset.originalLabel;
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        }
+        return;
+      }
+      document.body.classList.add('overflow-hidden');
+      modal.dataset.resetForm = 'true';
+      modal.dataset.redirect = redirectUrl;
+      modal.classList.remove('hidden');
+    };
+
+    const setLoadingState = () => {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <span class="flex items-center gap-3">
+          <span class="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+          Memproses Pesanan...
+        </span>`;
+    };
+
+    const clearValidationState = (field) => {
+      field.classList.remove('ring-2', 'ring-rose-400', 'border-rose-400');
+    };
+
+    const setInvalid = (field) => {
+      field.classList.add('ring-2', 'ring-rose-400', 'border-rose-400');
+    };
+
+    checkoutForm.querySelectorAll('input, select, textarea').forEach(field => {
+      field.addEventListener('input', () => clearValidationState(field));
+    });
+
+    checkoutForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      let isValid = true;
+      const requiredFields = checkoutForm.querySelectorAll('[required]');
+
+      requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+          isValid = false;
+          setInvalid(field);
+        } else {
+          clearValidationState(field);
+        }
+      });
+
+      const phone = checkoutForm.querySelector('[name="customer_phone"]');
+      if (phone.value && !/^08[0-9]{8,11}$/.test(phone.value)) {
+        isValid = false;
+        setInvalid(phone);
+      }
+
+      const postal = checkoutForm.querySelector('[name="postal_code"]');
+      if (postal.value && !/^[0-9]{5}$/.test(postal.value)) {
+        isValid = false;
+        setInvalid(postal);
+      }
+
+      if (!isValid) {
+        showToast('Mohon lengkapi data wajib dengan format yang benar.', 'error');
+        return;
+      }
+
+      setLoadingState();
+
+      try {
+        const formData = new FormData(checkoutForm);
+        const response = await fetch(checkoutForm.action, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+          },
+          credentials: 'same-origin',
+          body: formData,
         });
-    </script>
-</body>
-</html>
+
+        const result = await response.json().catch(() => ({ message: 'Terjadi kesalahan tak terduga.' }));
+
+        if (!response.ok) {
+          if (response.status === 422 && result.errors) {
+            const [[field, messages]] = Object.entries(result.errors);
+            const input = checkoutForm.querySelector(`[name="${field}"]`);
+            if (input) setInvalid(input);
+            showToast(messages[0] ?? 'Data tidak valid.', 'error');
+          } else {
+            showToast(result.message ?? 'Gagal memproses pesanan.', 'error');
+          }
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = submitBtn.dataset.originalLabel;
+          return;
+        }
+
+        showToast(result.message ?? 'Pesanan berhasil dibuat!');
+
+        const paymentMethod = checkoutForm.querySelector('input[name="payment_method"]:checked')?.value || result.payment_method || 'cod';
+        const totalAmount = document.querySelector('.js-total-amount')?.textContent.trim() ?? '-';
+
+        if (paymentMethod === 'transfer') {
+          document.getElementById('transferOrderId').textContent = result.order_number ?? `INV-${Date.now().toString().slice(-6)}`;
+          document.getElementById('transferTotalAmount').textContent = totalAmount;
+        }
+
+        if (paymentMethod === 'qris') {
+          document.getElementById('qrisTotalAmount').textContent = totalAmount;
+        }
+
+        showModal(paymentMethod, result.redirect || '{{ route('orders.index') }}');
+      } catch (error) {
+        console.error('Checkout error:', error);
+        showToast('Terjadi kesalahan. Silakan coba lagi.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = submitBtn.dataset.originalLabel;
+      }
+    });
+  });
+</script>
+@endpush

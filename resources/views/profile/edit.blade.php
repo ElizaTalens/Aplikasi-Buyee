@@ -50,10 +50,6 @@
                                 <i class="fa-solid fa-user-pen w-6 text-center mr-2"></i>
                                 Biodata Diri
                             </a>
-                            <a href="#" class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                                <i class="fa-solid fa-map-location-dot w-6 text-center mr-2"></i>
-                                Daftar Alamat
-                            </a>
                         </div>
                         
                         {{-- Tombol Logout --}}

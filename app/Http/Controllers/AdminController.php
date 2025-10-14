@@ -1,174 +1,254 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\Order; // Asumsi kamu punya model Order
-use App\Models\User; // Asumsi kamu punya model User
+use App\Models\Order;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage; 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage; // Tambahkan ini untuk file management
 
 class AdminController extends Controller
 {
-    // Dashboard Stats
+    /**
+     * Mengambil statistik utama untuk dashboard.
+     */
     public function getDashboardStats()
     {
-        $totalProducts = Product::count();
-        $newOrders = Order::where('status', 'diproses')->count();
-        $totalUsers = User::count();
-        $totalSales = Order::where('status', 'selesai')->sum('total');
-        
         return response()->json([
-            'total_products' => $totalProducts,
-            'new_orders' => $newOrders,
-            'total_users' => $totalUsers,
-            'total_sales' => $totalSales,
+            'total_products' => Product::count(),
+            'new_orders'     => Order::whereIn('status', ['pending', 'diproses'])->count(),
+            'total_users'    => User::count(),
+            'total_sales'    => Order::where('status', 'selesai')->sum('total'),
         ]);
     }
 
-    // Products Management
-    // app/Http/Controllers/Admin/AdminController.php
-
-// ... (bagian atas controller)
-
+    /**
+     * Mengambil daftar produk dengan filter.
+     */
     public function getProducts(Request $request)
     {
-        // Mengambil semua produk dengan relasi kategori
-        $products = Product::with('category');
+        $query = Product::with('category')->latest();
 
-        // Menerapkan filter pencarian jika ada 'query'
-        if ($request->has('query')) {
-            $query = $request->input('query');
-            $products->where('name', 'like', '%' . $query . '%');
+        if ($request->filled('query')) {
+            $query->where('name', 'like', '%' . $request->input('query') . '%');
+        }
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->input('category_id'));
         }
 
-        // Menerapkan filter kategori jika ada 'category_id'
-        if ($request->has('category_id') && $request->input('category_id') != '') {
-            $products->where('category_id', $request->input('category_id'));
-        }
-
-        return response()->json($products->get());
+        return response()->json($query->get());
     }
 
+    /**
+     * Mengambil detail satu produk untuk form edit.
+     */
     public function getProduct($id)
     {
         $product = Product::findOrFail($id);
         return response()->json($product);
     }
-
+    
+    /**
+     * Menyimpan produk baru atau memperbarui produk yang ada.
+     */
     public function saveProduct(Request $request)
     {
-        // 1. Validasi Input
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'description' => 'nullable|string',
             'is_active' => 'required|boolean',
-            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validasi 'image_file'
+            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
-
-        // 2. Ambil atau Buat Model Product
-        $produk = $request->id ? Product::find($request->id) : new Product;
-
-        // 3. Proses upload IMAGE
-        // Ambil path lama (disimpan di kolom 'image' DB)
-        $path_gambar = $produk->image ?? null; 
-
-        // PERBAIKAN KRUSIAL A: Cek file yang diupload bernama 'image_file'
-        if ($request->hasFile('image_file')) { 
+    
+        try {
+            DB::beginTransaction();
+    
+            $product = Product::findOrNew($request->input('id'));
             
-            // Hapus image lama jika ada (optional, tapi disarankan)
-            // Catatan: Ini mengasumsikan file lama disimpan di public/uploads/products/
-            if ($produk->image && file_exists(public_path($produk->image))) {
-                unlink(public_path($produk->image));
+            // Map the validated data to correct field names
+            $product->name = $validated['name'];
+            $product->category_id = $validated['category_id'];
+            $product->price = $validated['price'];
+            $product->stock_quantity = $validated['stock']; // Map 'stock' to 'stock_quantity'
+            $product->description = $validated['description'];
+            $product->is_active = $validated['is_active'];
+            
+            // Generate SKU if it's a new product
+            if (!$product->exists && empty($product->sku)) {
+                $product->sku = 'SKU-' . strtoupper(uniqid());
+            }
+    
+            if ($request->hasFile('image_file')) {
+            // Hapus gambar lama jika ada
+            $currentImages = $product->images ?? [];
+            if (!empty($currentImages)) {
+                foreach ($currentImages as $imagePath) {
+                    if (Storage::disk('public')->exists($imagePath)) {
+                        Storage::disk('public')->delete($imagePath);
+                    }
+                }
             }
 
-            // PERBAIKAN KRUSIAL B: Mengambil file yang bernama 'image_file'
-            $file = $request->file('image_file'); 
-            $extension = $file->getClientOriginalExtension();
-            $fileName = 'uploads/products/' . time() . '_' . uniqid() . '.' . $extension; // Pastikan path konsisten
-
-            // Pindahkan file ke public/uploads/products/
-            $file->move(public_path('uploads/products'), basename($fileName)); 
-            
-            // **SIMPAN PATH RELATIF** dari folder public ke database
-            $path_gambar = $fileName; 
+            // Simpan gambar baru
+            $path = $request->file('image_file')->store('products', 'public');
+            $product->images = [$path]; // Store as array since it's JSON column
         }
-
-        // 4. Simpan data produk
-        // PERBAIKAN KRUSIAL C: Menggunakan nama field yang benar dari Request
-        $produk->name = $request->name;       
-        $produk->category_id = $request->category_id; // Tambahkan category_id
-        $produk->price = $request->price;     
-        $produk->stock = $request->stock;     
-        $produk->is_active = $request->is_active; // Tambahkan is_active
-        $produk->image = $path_gambar;        // Menyimpan path ke kolom 'image' di database
-
-        $produk->save();
-
-        return response()->json(['message' => 'Produk berhasil disimpan!']);
+    
+            $product->save();
+            DB::commit();
+    
+            return response()->json(['message' => 'Produk berhasil disimpan!']);
+    
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+        }
     }
 
+    /**
+     * Menghapus produk.
+     */
     public function deleteProduct($id)
     {
         $product = Product::findOrFail($id);
+
+        if ($product->images && !empty($product->images)) {
+            // Decode JSON string to array if needed
+            $images = is_string($product->images) ? json_decode($product->images, true) : $product->images;
+            
+            if (is_array($images)) {
+                foreach ($images as $imagePath) {
+                    if (Storage::disk('public')->exists($imagePath)) {
+                        Storage::disk('public')->delete($imagePath);
+                    }
+                }
+            }
+        }
+
         $product->delete();
         return response()->json(['message' => 'Produk berhasil dihapus!']);
     }
 
-    // Categories Management
+    /**
+     * Mengambil semua kategori (untuk dropdown dan halaman kategori).
+     */
     public function getCategories()
     {
-        $categories = Category::withCount('products')->get();
+        $categories = Category::withCount('products')->orderBy('name')->get();
         return response()->json($categories);
     }
 
+    /**
+     * Mengambil detail satu kategori untuk form edit.
+     */
     public function getCategory($id)
     {
         $category = Category::findOrFail($id);
         return response()->json($category);
     }
 
+    /**
+     * Menyimpan atau memperbarui kategori.
+     */
     public function saveCategory(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255|unique:categories,name,' . $request->input('id'),
         ]);
         
-        $categoryId = $request->input('id');
-        if ($categoryId) {
-            $category = Category::findOrFail($categoryId);
-            $category->update($request->all());
-            return response()->json(['message' => 'Kategori berhasil diupdate!']);
-        } else {
-            Category::create($request->all());
-            return response()->json(['message' => 'Kategori berhasil ditambahkan!']);
-        }
+        Category::updateOrCreate(['id' => $request->input('id')], ['name' => $validated['name']]);
+        
+        $message = $request->input('id') ? 'Kategori berhasil diupdate!' : 'Kategori berhasil ditambahkan!';
+        return response()->json(['message' => $message]);
     }
 
+    /**
+     * Menghapus kategori.
+     */
     public function deleteCategory($id)
     {
-        $category = Category::findOrFail($id);
-        if ($category->products()->count() > 0) {
-            return response()->json(['message' => 'Tidak bisa menghapus kategori yang masih memiliki produk.'], 409);
+        $category = Category::withCount('products')->findOrFail($id);
+        
+        if ($category->products_count > 0) {
+            return response()->json(['message' => 'Tidak bisa menghapus, kategori ini masih memiliki produk.'], 409);
         }
+        
         $category->delete();
         return response()->json(['message' => 'Kategori berhasil dihapus!']);
     }
 
-    // Orders Management
+    /**
+     * Mengambil daftar pesanan.
+     */
     public function getOrders()
     {
-        $orders = Order::with('user')->get();
+        $orders = Order::with(['user', 'orderItems.product'])
+            ->latest()
+            ->get()
+            ->map(function($order) {
+                return [
+                    'id' => $order->id,
+                    'customer_name' => $order->customer_name,
+                    'customer_email' => $order->customer_email,
+                    'customer_phone' => $order->customer_phone,
+                    'user' => $order->user,
+                    'total' => $order->total,
+                    'status' => $order->status,
+                    'payment_method' => $order->payment_method,
+                    'order_notes' => $order->order_notes,
+                    'address_text' => $order->address_text,
+                    'created_at' => $order->created_at,
+                    'updated_at' => $order->updated_at,
+                    'items_count' => $order->orderItems->count(),
+                    'items' => $order->orderItems->map(function($item) {
+                        return [
+                            'product_name' => $item->product->name,
+                            'qty' => $item->qty,
+                            'price' => $item->price,
+                            'subtotal' => $item->subtotal
+                        ];
+                    })
+                ];
+            });
         return response()->json($orders);
     }
 
+    /**
+     * Memperbarui status pesanan.
+     */
     public function updateOrderStatus(Request $request)
     {
+        $request->validate([
+            'id' => 'required|exists:orders,id',
+            'status' => 'required|in:pending,diproses,dikirim,selesai,batal',
+        ]);
+
         $order = Order::findOrFail($request->input('id'));
-        $order->status = $request->input('status');
+        $newStatus = $request->input('status');
+        
+        // Validasi transisi status yang logis
+        $validTransitions = [
+            'pending' => ['diproses', 'batal'],
+            'diproses' => ['dikirim', 'batal'],
+            'dikirim' => ['selesai'],
+            'selesai' => [], // Status final, tidak bisa diubah
+            'batal' => [] // Status final, tidak bisa diubah
+        ];
+        
+        if (!in_array($newStatus, $validTransitions[$order->status] ?? [])) {
+            return response()->json([
+                'message' => 'Transisi status tidak valid dari ' . $order->status . ' ke ' . $newStatus
+            ], 422);
+        }
+
+        $order->status = $newStatus;
         $order->save();
 
         return response()->json(['message' => 'Status pesanan berhasil diupdate!']);

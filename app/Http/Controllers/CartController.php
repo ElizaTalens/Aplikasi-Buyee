@@ -8,13 +8,16 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB; // <-- Tambahkan ini untuk Transaksi Database
 
 class CartController extends Controller
 {
     /**
-     * Display the user's cart
+     * Menampilkan halaman keranjang belanja pengguna.
+     *
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
      */
-    public function index(): JsonResponse|View
+    public function index(): View|JsonResponse
     {
         $cartItems = CartItem::with('product')
             ->where('user_id', Auth::id())
@@ -24,21 +27,24 @@ class CartController extends Controller
             return $item->quantity * $item->price;
         });
 
+        // Jika request mengharapkan JSON (misalnya dari API client)
         if (request()->expectsJson()) {
             return response()->json([
                 'cart_items' => $cartItems,
                 'total' => $total,
-                'count' => $cartItems->sum('quantity')
+                'count' => $this->getCartCount()
             ]);
         }
-
-        // PERBAIKAN: Mengubah 'cart.index' menjadi 'pages.cart'
-        // agar sesuai dengan lokasi file: resources/views/pages/cart.blade.php
+        
+        // Menampilkan view untuk browser
         return view('pages.cart', compact('cartItems', 'total'));
     }
 
     /**
-     * Add item to cart
+     * Menambahkan item baru ke dalam keranjang.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -50,58 +56,59 @@ class CartController extends Controller
 
         $product = Product::findOrFail($validated['product_id']);
 
-        // Check if product is active and in stock
-        if (!$product->is_active) {
-            return response()->json([
-                'message' => 'Product is not available'
-            ], 422);
+        // Validasi ketersediaan produk
+        if (!$product->is_active || $product->stock_quantity < $validated['quantity']) {
+            return response()->json(['message' => 'Stok produk tidak mencukupi atau tidak tersedia.'], 422);
         }
 
-        if ($product->stock_quantity < $validated['quantity']) {
-            return response()->json([
-                'message' => 'Insufficient stock available'
-            ], 422);
-        }
+        try {
+            DB::beginTransaction();
 
-        // Check if item already exists in cart
-        $existingItem = CartItem::where('user_id', Auth::id())
-            ->where('product_id', $validated['product_id'])
-            ->first();
+            $cartItem = CartItem::where('user_id', Auth::id())
+                ->where('product_id', $validated['product_id'])
+                ->first();
 
-        if ($existingItem) {
-            $newQuantity = $existingItem->quantity + $validated['quantity'];
-            
-            if ($product->stock_quantity < $newQuantity) {
-                return response()->json([
-                    'message' => 'Cannot add more items. Insufficient stock available'
-                ], 422);
+            if ($cartItem) {
+                // Jika item sudah ada, update kuantitasnya
+                $newQuantity = $cartItem->quantity + $validated['quantity'];
+                if ($product->stock_quantity < $newQuantity) {
+                    throw new \Exception('Stok tidak mencukupi untuk menambahkan kuantitas.');
+                }
+                $cartItem->quantity = $newQuantity;
+                $cartItem->price = $product->final_price; // Selalu update harga terbaru
+                $cartItem->product_options = $validated['product_options'] ?? [];
+                $cartItem->save();
+            } else {
+                // Jika item baru, buat entri baru
+                $cartItem = CartItem::create([
+                    'user_id' => Auth::id(),
+                    'product_id' => $validated['product_id'],
+                    'quantity' => $validated['quantity'],
+                    'price' => $product->final_price,
+                    'product_options' => $validated['product_options'] ?? []
+                ]);
             }
 
-            $existingItem->update([
-                'quantity' => $newQuantity,
-                'price' => $product->getFinalPrice(),
-                'product_options' => $validated['product_options'] ?? []
-            ]);
+            DB::commit();
 
-            $cartItem = $existingItem;
-        } else {
-            $cartItem = CartItem::create([
-                'user_id' => Auth::id(),
-                'product_id' => $validated['product_id'],
-                'quantity' => $validated['quantity'],
-                'price' => $product->getFinalPrice(),
-                'product_options' => $validated['product_options'] ?? []
-            ]);
+            return response()->json([
+                'message' => 'Produk berhasil ditambahkan ke keranjang!',
+                'cart_item' => $cartItem->load('product'),
+                'cart_count' => $this->getCartCount() // <-- Mengembalikan jumlah terbaru
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 422);
         }
-
-        return response()->json([
-            'message' => 'Item added to cart successfully',
-            'cart_item' => $cartItem->load('product')
-        ], 201);
     }
 
     /**
-     * Update cart item quantity
+     * Memperbarui kuantitas item di keranjang.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $id (CartItem ID)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(Request $request, string $id): JsonResponse
     {
@@ -109,63 +116,87 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1'
         ]);
 
-        $cartItem = CartItem::where('user_id', Auth::id())
-            ->findOrFail($id);
+        try {
+            DB::beginTransaction();
 
-        $product = $cartItem->product;
+            $cartItem = CartItem::where('user_id', Auth::id())->findOrFail($id);
+            $product = $cartItem->product;
 
-        if ($product->stock_quantity < $validated['quantity']) {
+            if ($product->stock_quantity < $validated['quantity']) {
+                throw new \Exception('Stok produk tidak mencukupi.');
+            }
+
+            $cartItem->update([
+                'quantity' => $validated['quantity'],
+                'price' => $product->final_price // Update harga jika berubah
+            ]);
+
+            DB::commit();
+
             return response()->json([
-                'message' => 'Insufficient stock available'
-            ], 422);
+                'message' => 'Kuantitas berhasil diperbarui.',
+                'cart_item' => $cartItem->load('product'),
+                'cart_count' => $this->getCartCount() // <-- Mengembalikan jumlah terbaru
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 422);
         }
-
-        $cartItem->update([
-            'quantity' => $validated['quantity'],
-            'price' => $product->getFinalPrice()
-        ]);
-
-        return response()->json([
-            'message' => 'Cart item updated successfully',
-            'cart_item' => $cartItem->load('product')
-        ]);
     }
 
     /**
-     * Remove item from cart
+     * Menghapus item dari keranjang.
+     *
+     * @param  string  $id (CartItem ID)
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(string $id): JsonResponse
     {
-        $cartItem = CartItem::where('user_id', Auth::id())
-            ->findOrFail($id);
-
+        $cartItem = CartItem::where('user_id', Auth::id())->findOrFail($id);
         $cartItem->delete();
 
         return response()->json([
-            'message' => 'Item removed from cart successfully'
+            'message' => 'Item berhasil dihapus dari keranjang.',
+            'cart_count' => $this->getCartCount() // <-- Mengembalikan jumlah terbaru
         ]);
     }
 
     /**
-     * Clear all items from cart
+     * Menghapus semua item dari keranjang.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function clear(): JsonResponse
     {
         CartItem::where('user_id', Auth::id())->delete();
 
         return response()->json([
-            'message' => 'Cart cleared successfully'
+            'message' => 'Semua item berhasil dihapus dari keranjang.',
+            'cart_count' => 0 // <-- Langsung kembalikan 0
         ]);
     }
 
     /**
-     * Get cart count
+     * Mendapatkan jumlah total kuantitas item di keranjang.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function count(): JsonResponse
     {
-        $count = CartItem::where('user_id', Auth::id())
-            ->sum('quantity');
+        return response()->json(['count' => $this->getCartCount()]);
+    }
 
-        return response()->json(['count' => $count]);
+    /**
+     * Helper method untuk menghitung total kuantitas item di keranjang.
+     *
+     * @return int
+     */
+    private function getCartCount(): int
+    {
+        if (!Auth::check()) {
+            return 0;
+        }
+        // Menjumlahkan total kuantitas, bukan hanya jumlah baris/produk
+        return CartItem::where('user_id', Auth::id())->sum('quantity');
     }
 }
