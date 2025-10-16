@@ -26,7 +26,8 @@ class HomeController extends Controller
         // Mengembalikan view 'home.blade.php' dan membawa data
         return view('pages.home', [
             'products' => $products,
-            'categories' => $categories
+            'categories' => $categories,
+            
         ]);
     }
 }

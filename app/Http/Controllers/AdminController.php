@@ -27,11 +27,6 @@ class AdminController extends Controller
         ]);
     }
 
-    // Products Management
-    // app/Http/Controllers/Admin/AdminController.php
-
-// ... (bagian atas controller)
-
     public function getProducts(Request $request)
     {
         // Mengambil semua produk dengan relasi kategori

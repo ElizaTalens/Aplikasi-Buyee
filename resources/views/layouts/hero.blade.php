@@ -1,13 +1,13 @@
-<section class="mx-auto max-w-7xl">
+<section class="pt-10 mx-auto max-w-7xl">
   <div class="relative overflow-hidden rounded-2xl bg-[#2a242b] p-10 text-white min-h-[360px] flex items-center">
     {{-- Text --}}
     <div class="max-w-xl">
-      <p class="text-sm text-white/70">Pro.Beyond.</p>
+      <p class="text-sm text-white/70">Buyee web</p>
       <h2 class="mt-2 text-5xl font-extrabold tracking-tight">
-        iPhone 14 <span class="text-white/90">Pro</span>
+        Buyee <span class="text-white/90"></span>
       </h2>
       <p class="mt-2 text-xs text-white/60">
-        Created to change everything for the better. For everyone
+        Temukan produk lokal mu disini dan dukung usaha kecil menengah di Indonesia.
       </p>
       <a href="#" class="mt-6 inline-flex h-9 items-center justify-center rounded-md border border-white/40 px-4 text-xs font-semibold hover:bg-white hover:text-[#2a242b] transition">
         Shop Now

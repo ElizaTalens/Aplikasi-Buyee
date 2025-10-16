@@ -35,20 +35,25 @@ class ProfileController extends Controller
             'birth_date' => ['nullable', 'date'],
             'gender' => ['nullable', 'string', 'in:male,female'],
             'phone' => ['nullable', 'string', 'max:20'],
-            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'], // Nama input harus 'photo'
         ]);
 
         // 3. Logika untuk update foto profil jika ada file yang diunggah
         if ($request->hasFile('photo')) {
-            // Hapus foto lama jika ada
+            
+            // Hapus foto lama jika ada (Menggunakan Storage yang aman)
             if ($user->profile_photo_path) {
+                // Storage::delete bekerja dengan path relatif dari disk yang dikonfigurasi (disini 'public')
                 Storage::disk('public')->delete($user->profile_photo_path);
             }
-            // Simpan foto baru dan update path di database
+            
+            // Simpan file baru dan dapatkan path relatifnya
+            // Akan disimpan di storage/app/public/profile-photos/
             $validated['profile_photo_path'] = $request->file('photo')->store('profile-photos', 'public');
-        }
-
+        } 
+        
         // 4. Update data pengguna dengan data yang sudah divalidasi
+        // Laravel akan memetakan 'profile_photo_path' dari $validated ke kolom user
         $user->update($validated);
 
         // 5. Arahkan kembali ke halaman edit dengan pesan sukses

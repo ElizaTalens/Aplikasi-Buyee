@@ -1,69 +1,29 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\Order;
+use Illuminate\View\View;
+use Illuminate\Support\Facades\Auth;
 
-use Illuminate\Http\Request;
+use Illuminate\Http\Request;   
 
 class OrderController extends Controller
 {
     /**
      * Menampilkan halaman status pesanan.
      */
-    public function index()
+     public function index(): View
     {
-        // --- Simulasi Data dari Database ---
-        // Nantinya, Anda akan mengambil data ini dari database, bukan ditulis manual seperti ini.
-        $orders = [
-            [
-                'id' => 'ORD-2025-001',
-                'date' => '20 September 2025, 14:30 WIB',
-                'status' => 'dikirim', // Pilihan: 'diproses', 'dikirim', 'selesai', 'batal'
-                'total' => '165.000',
-                'items' => [
-                    [
-                        'name' => 'Kaos Polos Premium Cotton',
-                        'quantity' => 2,
-                        'price' => '75.000',
-                        'subtotal' => '150.000',
-                        'icon' => 'fa-tshirt'
-                    ]
-                ]
-            ],
-            [
-                'id' => 'ORD-2025-002',
-                'date' => '22 September 2025, 10:15 WIB',
-                'status' => 'diproses',
-                'total' => '270.000',
-                'items' => [
-                    [
-                        'name' => 'Sepatu Sneakers Premium',
-                        'quantity' => 1,
-                        'price' => '250.000',
-                        'subtotal' => '250.000',
-                        'icon' => 'fa-running'
-                    ]
-                ]
-            ],
-            [
-                'id' => 'ORD-2025-003',
-                'date' => '15 September 2025, 16:20 WIB',
-                'status' => 'selesai',
-                'total' => '90.000',
-                'items' => [
-                    [
-                        'name' => 'Case HP Anti-Crack',
-                        'quantity' => 3,
-                        'price' => '25.000',
-                        'subtotal' => '75.000',
-                        'icon' => 'fa-mobile-alt'
-                    ]
-                ]
-            ]
-        ];
-        // --- Akhir Simulasi Data ---
+        $userId = Auth::id();
 
-        // 1. Panggil file view bernama 'status_pesanan.blade.php'
-        // 2. Kirim data '$orders' ke dalam view agar bisa ditampilkan
+        // Mengambil semua pesanan milik user yang sedang login.
+        // Eager load orderItems dan produk di dalamnya untuk efisiensi.
+        $orders = Order::where('user_id', $userId)
+                        ->with(['orderItems.product'])
+                        ->latest() // Pesanan terbaru di atas
+                        ->get();
+                        
+        // Mengirim data dinamis ke view
         return view('pages.riwayatPesanan', ['ordersData' => $orders]);
     }
 }

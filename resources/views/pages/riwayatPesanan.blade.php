@@ -19,7 +19,7 @@
 
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #ffe4edff 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', sans-serif;
             padding-bottom: 2rem;
         }
 
@@ -298,7 +298,8 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    
+    <nav class="pt-2 text-sm text-gray-500 navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="index.php">
                 <i class="fas fa-store me-2"></i>
@@ -355,7 +356,7 @@
                 </div>
                 <div class="text-end">
                     <div class="badge bg-light text-dark fs-6 px-3 py-2">
-                        Total Pesanan: <strong>5</strong>
+                        Total Pesanan: <strong>{{ $ordersData->count() }}</strong>
                     </div>
                 </div>
             </div>
@@ -365,22 +366,22 @@
             <ul class="nav nav-tabs" id="orderTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab">
-                        <i class="fas fa-list me-2"></i>Semua (5)
+                        <i class="fas fa-list me-2"></i>Semua ({{ $ordersData->count() }})
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="process-tab" data-bs-toggle="tab" data-bs-target="#process" type="button" role="tab">
-                        <i class="fas fa-clock me-2"></i>Diproses (2)
+                        <i class="fas fa-clock me-2"></i>Diproses ({{ $ordersData->where('status', 'diproses')->count() }})
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="shipped-tab" data-bs-toggle="tab" data-bs-target="#shipped" type="button" role="tab">
-                        <i class="fas fa-shipping-fast me-2"></i>Dikirim (1)
+                        <i class="fas fa-shipping-fast me-2"></i>Dikirim ({{ $ordersData->where('status', 'dikirim')->count() }})
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">
-                        <i class="fas fa-check-circle me-2"></i>Selesai (1)
+                        <i class="fas fa-check-circle me-2"></i>Selesai ({{ $ordersData->where('status', 'selesai')->count() }})
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">

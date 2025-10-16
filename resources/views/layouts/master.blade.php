@@ -13,15 +13,12 @@
 
   @include('layouts.navbar')
 
-  <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12 py-6">
-    @include('layouts.hero')                 {{-- banner iPhone 14 Pro --}}
-    @include('layouts.category-row')         {{-- Browse by Category --}}
-    @include('layouts.product-grid-tabs')    {{-- New Arrival grid + tabs --}}
+  <main>
+    @yield('content')
   </main>
 
   @include('layouts.footer')
 
+  @stack('scripts')
 </body>
 </html>
-
-

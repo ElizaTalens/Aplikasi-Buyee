@@ -20,34 +20,49 @@ class WishlistController extends Controller
         return view('pages.wishlist', compact('wishlistItems'));
     }
 
+    // app/Http/Controllers/WishlistController.php
+
+// ... (kode di atas tetap sama)
+
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-        ]);
+        // 1. Cek Login (Penting!)
+        if (!Auth::check()) {
+            // Jika tidak login, kirim 401 Unauthorized secara eksplisit (lebih baik)
+            return response()->json(['message' => 'Silakan login untuk menambahkan ke Wishlist.'], 401); 
+        }
 
-        $userId = Auth::id();
-        $productId = $request->product_id;
+        // ... (kode validasi dan toggle di bawahnya tetap sama)
 
-        $wishlistItem = Wishlist::where('user_id', $userId) // <-- GANTI INI
-                                     ->where('product_id', $productId)
-                                     ->first();
+        $request->validate([ //
+            'product_id' => 'required|exists:products,id', //
+        ]); //
 
-        if ($wishlistItem) {
-            $wishlistItem->delete();
-            $action = 'removed';
-        } else {
-            Wishlist::create([ // <-- GANTI INI
-                'user_id' => $userId,
-                'product_id' => $productId,
-            ]);
-            $action = 'added';
+        $userId = Auth::id(); //
+        $productId = $request->product_id; //
+
+        $wishlistItem = Wishlist::where('user_id', $userId) //
+                                     ->where('product_id', $productId) //
+                                     ->first(); //
+
+        if ($wishlistItem) { //
+            $wishlistItem->delete(); //
+            $action = 'removed'; //
+            $message = 'Produk dihapus dari wishlist.'; //
+        } else { //
+            Wishlist::create([ //
+                'user_id' => $userId, //
+                'product_id' => $productId, //
+            ]); //
+            $action = 'added'; //
+            $message = 'Produk berhasil ditambahkan ke wishlist!'; //
         }
         
-        return response()->json([
-            'message' => 'Wishlist updated successfully.',
-            'action' => $action,
-            'count' => Wishlist::where('user_id', $userId)->count() // <-- GANTI INI
-        ]);
+        return response()->json([ //
+            'message' => $message, //
+            'action' => $action, //
+            'count' => Wishlist::where('user_id', $userId)->count() //
+        ]); //
     }
+
 }

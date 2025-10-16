@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-USE App\Models\Store;
+use App\Models\Store;
 
 class User extends Authenticatable
 {
@@ -22,10 +22,10 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        // 'phone',
-        // 'birth_date',
-        // 'gender',
-        // 'profile_photo',
+        'phone',
+        'birth_date',
+        'gender',
+        'profile_photo_path',
         // 'email_verified_at',
         // 'phone_verified_at',
         // 'wallet_balance',
@@ -53,7 +53,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             // 'phone_verified_at' => 'datetime',
-            // 'birth_date' => 'date',
+            'birth_date' => 'date',
             // 'wallet_balance' => 'decimal:2',
             // 'gopay_balance' => 'decimal:2',
         ];
@@ -82,11 +82,11 @@ class User extends Authenticatable
     // {
     //     return $this->hasMany(WishlistItem::class);
     // }
-    public function favoriteStores()
-    {
-        // Assuming you have a pivot table 'favorite_store_user' with 'user_id' and 'store_id'
-        return $this->belongsToMany(Store::class, 'favorite_store_user', 'user_id', 'store_id');
-    }
+    // public function favoriteStores()
+    // {
+    //     // Assuming you have a pivot table 'favorite_store_user' with 'user_id' and 'store_id'
+    //     return $this->belongsToMany(Store::class, 'favorite_store_user', 'user_id', 'store_id');
+    // }
     // public function settings()
     // {
     //     return $this->hasOne(UserSetting::class);
