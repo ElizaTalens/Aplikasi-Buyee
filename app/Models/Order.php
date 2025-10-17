@@ -13,7 +13,12 @@ class Order extends Model
         'user_id',
         'total',
         'status',
-        'address_text'
+        'address_text',
+        'customer_name',
+        'customer_email',
+        'customer_phone',
+        'payment_method',
+        'order_notes',
     ];
 
     public function user()

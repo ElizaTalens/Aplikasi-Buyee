@@ -7,29 +7,38 @@
     
 
     <div class="flex-1">
-      <form action="{{ route('catalog') }}" method="GET" class="relative group">
+      <form action="{{ route('products.search') }}" method="GET" class="relative group">
+        <button type="submit" class="absolute left-0 top-0 h-0 w-0 overflow-hidden" tabindex="-1" aria-hidden="true"></button>
         <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
         <input
-          name="search"
+          name="q"
           type="search"
           class="w-full h-12 rounded-md border border-gray-200 bg-gray-50 pl-10 pr-4 text-lg outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-200"
           placeholder="Cari di Buyee..."
-          value="{{ request('search') }}"
+          value="{{ request('q', request('search')) }}"
           autocomplete="off" 
         />
         
         {{-- Dropdown untuk History Pencarian --}}
         @if(isset($searchHistory) && !empty($searchHistory))
-        <div class="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 hidden group-focus-within:block">
+        <div class="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-20 hidden group-focus-within:block group-hover:block">
             <div class="p-4">
-                <h4 class="text-sm font-semibold text-gray-600">Pencarian Terakhir</h4>
+                <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-semibold text-gray-600">Pencarian Terakhir</h4>
+                    @if(count($searchHistory) > 1)
+                        <button type="submit" name="clear_history" value="all" class="text-xs font-semibold text-rose-500 hover:text-rose-600">Hapus semua</button>
+                    @endif
+                </div>
                 <ul class="mt-2 space-y-1">
                     @foreach ($searchHistory as $term)
-                    <li>
-                        <a href="{{ route('catalog', ['search' => $term]) }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">
-                            <i class="fa-solid fa-history text-gray-400 mr-3"></i>
-                            <span class="text-gray-800">{{ $term }}</span>
-                        </a>
+                    <li class="flex items-center justify-between gap-2 rounded-lg px-2 hover:bg-gray-50">
+                        <button type="submit" name="selected_history" value="{{ $term }}" class="flex flex-1 items-center gap-3 py-2 text-left">
+                            <i class="fa-solid fa-history text-gray-400"></i>
+                            <span class="text-sm text-gray-800">{{ $term }}</span>
+                        </button>
+                        <button type="submit" name="remove_history" value="{{ $term }}" class="text-xs font-semibold text-gray-400 hover:text-rose-500 transition" aria-label="Hapus pencarian '{{ $term }}'">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </li>
                     @endforeach
                 </ul>
@@ -108,18 +117,23 @@
             </a>
         @endauth
 
-        {{-- Dropdown Menu (Menggunakan mt-1 dan pt-3 untuk stabilitas hover) --}}
+        {{-- Dropdown Menu (Hidden by default, shown on hover) --}}
         <div class="absolute right-0 mt-1 w-56 rounded-xl shadow-2xl bg-white ring-1 ring-gray-200 
-                    opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-200 ease-out 
-                    transform translate-y-2 group-hover:translate-y-0 pt-3"
+                    opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out pt-3"
             style="z-index: 1000; min-width: 200px;">
             
             <div class="p-2 space-y-1">
                 @auth
                     {{-- Opsi: Profile Saya --}}
                     <a href="{{ route('profile.edit') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-50 text-gray-800 transition">
-                        <i class="fa-solid fa-user mr-3 text-lg text-indigo-500"></i>
+                        <i class="fa-solid fa-user mr-3 text-gray-500"></i>
                         <span class="font-semibold">Profile Saya</span>
+                    </a>
+                    
+                    {{-- Opsi: Riwayat Pesanan --}}
+                    <a href="{{ route('orders.index') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-50 text-gray-800 transition">
+                        <i class="fa-solid fa-shopping-bag mr-3 text-gray-500"></i>
+                        <span class="font-semibold">Riwayat Pesanan</span>
                     </a>
                     
                     {{-- FIX: Logout menggunakan FORM POST --}}

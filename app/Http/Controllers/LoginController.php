@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
@@ -16,38 +17,55 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        // validasi input
-        $request->validate([
+        // 1. Validasi Input
+        $credentials = $request->validate([
             'email' => 'required|email',
-            'password' => 'required|min:6',
+            'password' => 'required|string', // Gunakan string untuk mencegah masalah validasi
             'role' => 'required|in:admin,user', 
         ]);
-
-        // cari user berdasarkan email
-        $user = User::where('email', $request->email)
-            ->where('role', $request->role)
-            ->first();
-
-        // cek user & password
-        if ($user && Hash::check($request->password, $user->password)) {
-            Auth::login($user);
         
+        // Tambahkan role ke credentials untuk proses attempt
+        $credentials['role'] = $credentials['role'];
+
+        // 2. Proses Login Menggunakan Auth::attempt()
+        // Auth::attempt() menangani pencarian user dan pengecekan password secara aman
+        // Note: Kita TIDAK perlu menggunakan User::where() dan Hash::check() manual
+        
+        if (Auth::attempt($credentials, $request->boolean('remember'))) { // Tambahkan opsi 'remember' jika ada
+            $request->session()->regenerate();
+
+            $user = Auth::user(); // Ambil user yang baru login
+
+            // 3. Logika Pengalihan Cerdas (Intended URL)
+            
+            // Tentukan rute default berdasarkan role
             if ($user->role === 'admin') {
-                return redirect('/buyee_admin_dashboard');
-            } elseif ($user->role === 'user') {
-                return redirect()->route('home'); // arahkan ke dashboard user
+                $defaultRoute = '/buyee_admin_dashboard';
+            } else { // role === 'user'
+                $defaultRoute = route('home');
             }
+            
+            // Gunakan intended() untuk mengarahkan ke URL yang terakhir dicoba (misal: /product/tas-cantik)
+            // Jika tidak ada intended URL, arahkan ke rute default role yang sudah ditentukan.
+            return redirect()->intended($defaultRoute);
+
         }
 
-        // kalau gagal
-        return back()->withErrors([
-            'email' => 'Email atau password, atu role salah',
+        // 4. Jika Gagal: Kembalikan dengan error
+        // Gunakan ValidationException untuk penanganan error yang lebih bersih di Laravel
+        throw ValidationException::withMessages([
+            'email' => ['Email, password, atau role salah.'],
         ]);
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
         Auth::logout();
+        
+        // Invalidate session dan regenerate token untuk keamanan
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         // Mengarahkan ke halaman utama (rute '/') yang dinamai 'home'
         return redirect()->route('home'); 
     }

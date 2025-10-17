@@ -8,6 +8,10 @@ use App\Models\Order; // Asumsi kamu punya model Order
 use App\Models\User; // Asumsi kamu punya model User
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage; 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class AdminController extends Controller
 {
@@ -170,9 +174,22 @@ class AdminController extends Controller
     }
 
     // Orders Management
-    public function getOrders()
+    public function getOrders(Request $request)
     {
         $orders = Order::with('user')->get();
+        // Logika Pencarian (Search)
+        if ($request->has('query') && $request->input('query') != '') {
+            $query = $request->input('query');
+            $orders->whereHas('user', function ($q) use ($query) {
+                $q->where('name', 'like', '%' . $query . '%')
+                ->orWhere('email', 'like', '%' . $query . '%');
+            })->orWhere('address_text', 'like', '%' . $query . '%');
+        }
+
+        // Logika Filter Status
+        if ($request->has('status') && $request->input('status') != '' && $request->input('status') != 'Semua Status') {
+            $orders->where('status', $request->input('status'));
+        }
         return response()->json($orders);
     }
 

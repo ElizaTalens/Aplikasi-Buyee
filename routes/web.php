@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;           
+use Illuminate\Http\Request;    
 
 // ==== Controllers dari branch "login" ====
 use App\Http\Controllers\LoginController;
@@ -15,6 +15,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\WishlistController;
+
 
 
 /*
@@ -47,6 +48,11 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', [RegisterController::class, 'showRegisterForm'])->name('register.form');
     Route::post('/register', [RegisterController::class, 'register'])->name('register');
 });
+Route::get('/logout', function () {
+    // auth()->logout();
+    return redirect('/login');
+})->name('logout');
+
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 /*
@@ -54,8 +60,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 | SEARCH
 |--------------------------------------------------------------------------
 */
-Route::get('/search', [ProductController::class, 'search'])->name('products.search');
-
+Route::get('/search', [ProductController::class, 'index'])->name('products.search');
+Route::get('/product/{product:slug}', [ProductController::class, 'show'])->name('product.detail');
 /*
 |--------------------------------------------------------------------------
 | PROTECTED PAGES (Cart, Wishlist, Profile, etc)
@@ -85,6 +91,12 @@ Route::middleware('auth')->group(function () {
  
     // Ganti route checkout ini
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
+    Route::post('/checkout', [CheckoutController::class, 'processOrder'])->name('checkout.process');
+    // FIX: Rute riwayat pesanan dipindahkan ke sini agar terproteksi
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show')->whereNumber('order');
+    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel')->whereNumber('order');
+    
 });
 
 

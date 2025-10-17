@@ -71,6 +71,19 @@
             background: #FFB6C1; /* Indigo/Ungu */
             color: white;
         }
+        /* Style untuk product images di Ringkasan */
+        .cart-item .product-image {
+            width: 80px; 
+            height: 80px; 
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        .cart-item .product-image img {
+             width: 100%;
+             height: 100%;
+             object-fit: cover;
+        }
+        .text-error { color: #dc3545; }
     </style>
 </head>
 <body>
@@ -89,6 +102,15 @@
                             Checkout Pesanan
                         </h2>
                     </div>
+                    
+                    {{-- Pesan Error dari Server/Backend (Stok, Validasi, dll) --}}
+                    @if (session('error'))
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
                         Pastikan data pesanan dan alamat pengiriman sudah benar sebelum melanjutkan.
@@ -100,8 +122,15 @@
                 <div class="col-lg-8">
                     <div class="card checkout-card mb-4">
                         <div class="card-body p-4">
-                            <form id="checkoutForm" method="POST" action=""> 
+                            {{-- UBAH ACTION KE RUTE PROSES PESANAN --}}
+                            <form id="checkoutForm" method="POST" action="{{ route('checkout.process') }}"> 
                                 @csrf 
+                                
+                                {{-- INPUT TERSEMBUNYI UNTUK DATA KERANJANG (Diperlukan oleh Controller) --}}
+                                {{-- Meskipun controller mengambil dari DB, ini membantu debugging dan sinkronisasi --}}
+                                @if (isset($cartItems) && $cartItems->isNotEmpty())
+                                    <input type="hidden" name="cart_items_json" value="{{ $cartItems->toJson() }}">
+                                @endif
                                 
                                 <h5 class="section-header">
                                     <i class="fas fa-user text-indigo-600 me-2"></i>
@@ -111,18 +140,19 @@
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label class="form-label">Nama Lengkap *</label>
-                                        <input type="text" class="form-control" name="customer_name" value="{{ Auth::user()->name }}" required readonly>
+                                        {{-- Menggunakan nilai dari Auth::user() untuk nama dan email --}}
+                                        <input type="text" class="form-control" name="customer_name" value="{{ Auth::user()->name }}" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Email *</label>
-                                        <input type="email" class="form-control" name="customer_email" value="{{ Auth::user()->email }}" required readonly>
+                                        <input type="email" class="form-control" name="customer_email" value="{{ Auth::user()->email }}" required>
                                     </div>
                                 </div>
                                 
                                 <div class="row mb-4">
                                     <div class="col-md-6">
                                         <label class="form-label">Nomor Telepon *</label>
-                                        <input type="tel" class="form-control" name="customer_phone" placeholder="08xxxxxxxxxx" required>
+                                        <input type="tel" class="form-control" name="customer_phone" placeholder="08xxxxxxxxxx" value="{{ Auth::user()->phone ?? '' }}" required>
                                     </div>
                                 </div>
 
@@ -224,17 +254,16 @@
                                     $itemSubtotal = $item->quantity * $item->product->price;
                                     $productImage = $item->product->image ? '/' . $item->product->image : asset('images/placeholder.jpg'); 
                                 @endphp
-                                <div class="cart-item bg-white text-dark">
+                                <div class="cart-item bg-white text-dark mb-3 p-2 rounded">
                                     <div class="d-flex align-items-center">
-                                        <div class="product-image me-3 " style="width: 180px; height: 180px;">
-                                            <img src="{{ $productImage }}" alt="{{ $item->product->name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                        <div class="product-image me-3">
+                                            <img src="{{ $productImage }}" alt="{{ $item->product->name }}" >
                                         </div>
                                         <div class="flex-grow-1">
-                                            <h6 class="mb-1 fw-bold fs-5">{{ $item->product->name }}</h6>
+                                            <h6 class="mb-1 fw-bold fs-6">{{ $item->product->name }}</h6>
                                             <small class="text-muted">Kategori: {{ $item->product->category->name ?? 'N/A' }}</small>
                                             <div class="d-flex justify-content-between mt-1">
                                                 <span>{{ $item->quantity }} x Rp {{ number_format($item->product->price, 0, ',', '.') }}</span>
-                                                {{-- <strong>Rp {{ number_format($itemSubtotal, 0, ',', '.') }}</strong> --}}
                                             </div>
                                         </div>
                                     </div>
@@ -257,8 +286,10 @@
                                     <strong class="h5 total-amount">Rp {{ number_format($total, 0, ',', '.') }}</strong>
                                 </div>
                                 
-                                <button type="submit" form="checkoutForm" class="btn btn-checkout w-100 btn-lg">
-                                    <i class="fas fa-check me-2"></i>
+                                {{-- TOMBOL SUBMIT YANG AKAN DIPERBAIKI ICONNYA --}}
+                                <button type="submit" form="checkoutForm" id="btnSubmitCheckout" class="btn btn-checkout w-100 btn-lg">
+                                    {{-- ICON DEFAULT ADALAH CART, BUKAN CHECK --}}
+                                    <i class="fas fa-shopping-cart me-2"></i>
                                     Buat Pesanan
                                 </button>
                                 
@@ -275,7 +306,9 @@
             </div>
         </div>
     </div>
-
+    
+    {{-- MODALS COD/TRANSFER/QRIS DI SINI --}}
+    {{-- MODAL TRANSFER --}}
     <div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -313,6 +346,7 @@
         </div>
     </div>
 
+    {{-- MODAL COD SUCCESS --}}
     <div class="modal fade" id="codSuccessModal" tabindex="-1" aria-labelledby="codSuccessModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -331,7 +365,8 @@
             </div>
         </div>
     </div>
-
+    
+    {{-- MODAL QRIS --}}
     <div class="modal fade" id="qrisModal" tabindex="-1" aria-labelledby="qrisModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -356,17 +391,31 @@
         </div>
     </div>
 
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const checkoutForm = document.getElementById('checkoutForm');
             const totalAmountEl = document.querySelector('.total-amount');
+            const btnSubmit = document.getElementById('btnSubmitCheckout'); // Ambil tombol submit
+
+            // Set action form ke route POST yang benar
+            checkoutForm.action = '{{ route("checkout.process") }}';
+            
+            // Tambahkan hidden input untuk cart items (jika belum ada di HTML)
+            if (!document.querySelector('input[name="cart_items_json"]')) {
+                const cartItemsJsonInput = document.createElement('input');
+                cartItemsJsonInput.type = 'hidden';
+                cartItemsJsonInput.name = 'cart_items_json';
+                cartItemsJsonInput.value = JSON.stringify({!! $cartItems->toJson() !!}); // Ambil dari PHP
+                checkoutForm.appendChild(cartItemsJsonInput);
+            }
 
             // --- Form Submission Handler ---
             checkoutForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
-                // Basic validation
+                // 1. Validasi Frontend (menggunakan logika yang sudah ada)
                 const requiredFields = this.querySelectorAll('[required]');
                 let isValid = true;
                 
@@ -379,62 +428,37 @@
                     }
                 });
                 
-                // Phone validation
+                // (Logika validasi telepon dan kode pos dipertahankan)
                 const phone = document.querySelector('[name="customer_phone"]');
                 const phoneRegex = /^08[0-9]{8,11}$/;
                 if (phone.value && !phoneRegex.test(phone.value)) {
                     phone.classList.add('is-invalid');
                     isValid = false;
+                } else if (phone.value) {
+                    phone.classList.remove('is-invalid');
                 }
                 
-                // Postal code validation
                 const postalCode = document.querySelector('[name="postal_code"]');
                 const postalRegex = /^[0-9]{5}$/;
                 if (postalCode.value && !postalRegex.test(postalCode.value)) {
                     postalCode.classList.add('is-invalid');
                     isValid = false;
+                } else if (postalCode.value) {
+                     postalCode.classList.remove('is-invalid');
                 }
                 
+                // 2. Jika Validasi Berhasil, kirim Form ke Backend
                 if (isValid) {
-                    const submitBtn = document.querySelector('button[form="checkoutForm"]');
-                    const originalText = submitBtn.innerHTML;
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
+                    // Tampilkan status memproses
+                    btnSubmit.disabled = true;
+                    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
                     
-                    // Simulate processing (Replace with your actual API call)
-                    setTimeout(() => {
-                        const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
-                        const totalAmount = totalAmountEl.textContent.trim(); 
+                    // Kirim form secara nyata (mengarah ke CheckoutController@processOrder)
+                    this.submit();
 
-                        // === LOGIKA TAMPIL MODAL BERDASARKAN METODE PEMBAYARAN ===
-                        if (paymentMethod === 'transfer') {
-                            // Update modal transfer dan tampilkan
-                            document.getElementById('transferTotalAmount').textContent = totalAmount;
-                            document.getElementById('transferOrderId').textContent = 'INV-' + Date.now(); // Contoh ID
-                            const transferModal = new bootstrap.Modal(document.getElementById('transferModal'));
-                            transferModal.show();
-                        } else if (paymentMethod === 'qris') { 
-                            // Update modal qris dan tampilkan
-                            document.getElementById('qrisTotalAmount').textContent = totalAmount;
-                            const qrisModal = new bootstrap.Modal(document.getElementById('qrisModal'));
-                            qrisModal.show();
-                        } else { // COD
-                            // Tampilkan modal COD Success
-                            const codModal = new bootstrap.Modal(document.getElementById('codSuccessModal'));
-                            codModal.show();
-                        }
-
-                        // Add event listener to reset button when any modal is closed
-                        document.querySelectorAll('.modal').forEach(modalEl => {
-                            modalEl.addEventListener('hidden.bs.modal', () => {
-                                submitBtn.disabled = false;
-                                submitBtn.innerHTML = originalText;
-                                // Hapus redirect atau set window.location.href = '{{ route("orders.index") }}'
-                                // checkoutForm.reset(); 
-                            }, { once: true }); 
-                        });
-
-                    }, 1500); 
+                    // --- PENTING: Hapus blok simulasi modal di sini ---
+                    // Karena kita mengandalkan redirect dari server
+                    
                 } else {
                     alert('Mohon lengkapi semua field yang wajib diisi dengan benar.');
                 }
@@ -449,7 +473,7 @@
                 });
             });
 
-            // --- Dynamic Info for Bank Transfer ---
+            // --- Logika Modal (Hanya untuk Tampilan, Tidak Berhubungan dengan Submit) ---
             const paymentRadios = document.querySelectorAll('[name="payment_method"]');
             const transferInfoSection = document.createElement('div');
             transferInfoSection.id = 'transferInfo';
@@ -463,16 +487,26 @@
 
             paymentRadios.forEach(radio => {
                 radio.addEventListener('change', function() {
-                    const formBody = document.querySelector('#checkoutForm .card-body');
                     const existingInfo = document.getElementById('transferInfo');
-                    
+                    const paymentRow = this.closest('.row.mb-4');
+
                     if (this.value === 'transfer' && !existingInfo) {
-                        this.closest('.row.mb-4').insertAdjacentElement('afterend', transferInfoSection);
+                        paymentRow.insertAdjacentElement('afterend', transferInfoSection);
                     } else if (this.value !== 'transfer' && existingInfo) {
                         existingInfo.remove();
                     }
                 });
             });
+
+            // Logika untuk menampilkan modal sukses COD/Transfer/QRIS (ASUMSI DARI JAVASCRIPT LAMA)
+            // Ini sebenarnya TIDAK PERLU dijalankan di frontend karena server akan redirect. 
+            // Namun, jika Anda ingin menggunakan modal untuk konfirmasi di frontend:
+            /*
+            const showSuccessModal = (paymentMethod) => {
+                // Di sini Anda bisa memicu modal transfer/cod/qris jika proses AJAX/Server sukses
+            };
+            */
+            
         });
     </script>
 </body>
