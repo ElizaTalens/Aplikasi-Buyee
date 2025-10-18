@@ -49,7 +49,17 @@
     {{-- |           BAGIAN 2: BROWSE BY CATEGORY            | --}}
     {{-- ======================================================= --}}
     <section class="my-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {{-- ... (Judul dan tombol scroll tidak diubah) ... --}}
+        <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Browse By Category</h3>
+            <div class="flex items-center gap-2">
+                <button id="cat-prev" class="grid h-9 w-9 place-items-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40" aria-label="Scroll left">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button id="cat-next" class="grid h-9 w-9 place-items-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50" aria-label="Scroll right">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
       
         <div id="cat-track" class="mt-5 flex gap-4 overflow-x-auto snap-x scroll-smooth" style="scrollbar-width: none; -ms-overflow-style: none;">
             <style>#cat-track::-webkit-scrollbar { display: none; }</style>
