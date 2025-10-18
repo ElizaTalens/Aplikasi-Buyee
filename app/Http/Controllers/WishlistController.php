@@ -28,36 +28,37 @@ class WishlistController extends Controller
      */
     public function toggle(Request $request): JsonResponse
     {
-        $request->validate(['product_id' => 'required|exists:products,id']);
-
-        $userId = Auth::id();
-        $productId = $request->product_id;
-
-        // Cari item wishlist berdasarkan user dan produk
-        $wishlistItem = Wishlist::where('user_id', $userId)
-                                ->where('product_id', $productId)
-                                ->first();
-
-        if ($wishlistItem) {
-            // Jika item ada, hapus
-            $wishlistItem->delete();
-            $action = 'removed';
-            $message = 'Produk berhasil dihapus dari wishlist.';
-        } else {
-            // Jika tidak ada, buat baru
-            Wishlist::create([
-                'user_id' => $userId,
-                'product_id' => $productId,
-            ]);
-            $action = 'added';
-            $message = 'Produk berhasil ditambahkan ke wishlist!';
+        if (!auth()->check()) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
         }
-        
-        // Kembalikan respons yang informatif
+
+        $product_id = $request->input('product_id');
+        $user_id = auth()->id();
+
+        // Cek apakah item sudah ada di wishlist
+        $wishlist = Wishlist::where('user_id', $user_id)
+                           ->where('product_id', $product_id)
+                           ->first();
+
+        if ($wishlist) {
+            $wishlist->delete();
+            $message = 'Produk dihapus dari wishlist';
+        } else {
+            Wishlist::create([
+                'user_id' => $user_id,
+                'product_id' => $product_id
+            ]);
+            $message = 'Produk ditambahkan ke wishlist';
+        }
+
+        // Dapatkan jumlah terbaru
+        $count = Wishlist::where('user_id', $user_id)->count();
+
         return response()->json([
             'message' => $message,
-            'action' => $action,
-            'count' => Wishlist::where('user_id', $userId)->count()
+            'count' => $count
         ]);
     }
 

@@ -9,22 +9,23 @@ use Illuminate\Support\Facades\Log;
 
 class LoginController extends Controller
 {
-    // tampilkan form login (sesuai web.php -> 'pages.login')
-    public function showLoginForm()
+    // tampilkan form login 
+    public function showLoginForm(Request $request)
     {
+        if ($request->has('redirect')) {
+            session(['redirect_url' => $request->redirect]);
+        }
         return view('pages.login');
     }
 
     public function login(Request $request)
     {
-        // Validasi input (role wajib, email harus format email)
         $request->validate([
             'email'    => 'required|email',
             'password' => 'required|min:6',
             'role'     => 'required|in:admin,user',
         ]);
 
-        // Coba login dengan credentials + role, sertakan remember (checkbox)
         $remember    = $request->boolean('remember');
         $credentials = [
             'email' => $request->email,
@@ -32,11 +33,8 @@ class LoginController extends Controller
             'role' => $request->role,
         ];
 
-        // di dalam metode login()
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
-            
-            // Ambil user yang baru login
             $user = $request->user();
             
             // Log untuk debugging
@@ -55,7 +53,14 @@ class LoginController extends Controller
                 ])->onlyInput('email', 'role');
             }
 
-            // Redirect berdasarkan role dengan pengecekan yang lebih ketat
+            // Cek redirect URL dari session
+            if (session()->has('redirect_url')) {
+                $redirect = session('redirect_url');
+                session()->forget('redirect_url'); // Hapus dari session
+                return redirect($redirect);
+            }
+
+            // Default redirect berdasarkan role
             if ($user->role === 'admin') {
                 \Log::info('Admin login - redirecting to dashboard', ['user_id' => $user->id]);
                 return redirect()->intended(route('admin.page.dashboard'));
@@ -63,15 +68,12 @@ class LoginController extends Controller
                 \Log::info('User login - redirecting to home', ['user_id' => $user->id]);
                 return redirect()->intended(route('home'));
             } else {
-                // Jika role tidak dikenali, logout dan error
                 Auth::logout();
                 return back()->withErrors([
                     'role' => 'Role tidak valid.',
                 ])->onlyInput('email', 'role');
             }
         }
-
-        // Gagal login
         return back()->withErrors([
             'email' => 'Email, password, atau role tidak sesuai.',
         ])->onlyInput('email', 'role');

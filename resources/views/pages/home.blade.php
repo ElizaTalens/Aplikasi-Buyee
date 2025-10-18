@@ -4,53 +4,103 @@
 
 @section('content')
 
+<!-- quick CSS untuk menghilangkan garis/garis horisontal yang muncul -->
+<style>
+  /* sembunyikan hr global yang tidak diinginkan */
+  hr { display: none !important; }
+
+  /* pastikan track kategori tidak memunculkan garis bawah */
+  #cat-track { border-bottom: none !important; box-shadow: none !important; }
+
+  /* jika ada elemen separator tak terduga, sembunyikan juga */
+  .page-separator, .separator-line { display: none !important; }
+
+  /* backup: jika ada border pada container berikut, nonaktifkan */
+  .max-w-7xl > .border-b, .max-w-7xl + .my-24 { border-top: none !important; }
+
+  /* Hapus garis horizontal sisa (defensive) */
+  #cat-track,
+  #cat-track a,
+  #cat-track .group,
+  .max-w-7xl,
+  .max-w-7xl > * {
+    border-top: none !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
+  }
+
+  /* sembunyikan elemen separator umum yang kadang dibuat secara dinamis */
+  hr,
+  .page-separator,
+  .separator-line,
+  .line-divider {
+    display: none !important;
+  }
+
+  /* sembunyikan pseudo-element yang membuat garis */
+  #cat-track::before,
+  #cat-track::after,
+  .max-w-7xl::before,
+  .max-w-7xl::after {
+    display: none !important;
+  }
+
+  /* fallback: sembunyikan elemen tipis 1px yang mungkin muncul */
+  div[style*="height:1px"], div[style*="height: 1px"], div[style*="border-top: 1px"], div[style*="border-bottom: 1px"] {
+    display: none !important;
+  }
+
+  /* Tab underline control (gunakan kelas .active) */
+  .tab-button { position: relative; cursor: pointer; font-weight: 600; transition: color .18s ease, font-weight .12s ease; }
+  /* saat hover atau aktif, buat teks tebal (sama) */
+  .tab-button:hover,
+  .tab-button.active { font-weight: 700; color: #111827; }
+  .tab-button::after{
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 3px;
+    background: #111827; /* warna underline (sesuaikan) */
+    border-radius: 4px;
+    transform-origin: left center;
+    transform: scaleX(0);
+    opacity: 0;
+    transition: transform .18s ease, opacity .18s ease;
+  }
+  .tab-button.active::after{
+    transform: scaleX(1);
+    opacity: 1;
+  }
+
+  /* pastikan hover/active visual tetap bekerja */
+  .tab-button:hover { color: #111827; }
+</style>
+
     {{-- ======================================================= --}}
     {{-- |                BAGIAN 1: HERO BANNER                | --}}
     {{-- ======================================================= --}}
     <section class="mx-auto max-w-7xl">
-        <div class="relative overflow-hidden rounded-2xl bg-[#2a242b] p-10 text-white min-h-[360px] flex items-center">
-            {{-- Text --}}
-            <div class="max-w-xl">
-                @auth
-                    {{-- Sapaan untuk PENGGUNA yang sudah login --}}
-                    <p class="text-sm text-white/70">Selamat Datang Kembali, {{ Auth::user()->name }}!</p>
-                    <h2 class="mt-2 text-5xl font-extrabold tracking-tight">
-                        Buyee: Belanja Online
-                    </h2>
-                    <p class="mt-2 text-xs text-white/60">
-                        Jelajahi ribuan produk UMKM pilihan kami. Saatnya dukung produk lokal!
-                    </p>
-                    <a href="{{ route('catalog') }}" class="mt-6 inline-flex h-9 items-center justify-center rounded-md border border-white/40 px-4 text-xs font-semibold hover:bg-white hover:text-[#2a242b] transition">
-                        Mulai Belanja
-                    </a>
-                @else
-                    {{-- Sapaan untuk TAMU (Guest) --}}
-                    <p class="text-sm text-white/70">Belanja Online Pilihan Lokal</p>
-                    <h2 class="mt-2 text-5xl font-extrabold tracking-tight">
-                        Buyee <span class="text-white/90"></span>
-                    </h2>
-                    <p class="mt-2 text-xs text-white/60">
-                        Temukan berbagai produk unggulan UMKM, mulai dari kerajinan tangan hingga kuliner unik.
-                    </p>
-                    <a href="{{ route('catalog') }}" class="mt-6 inline-flex h-9 items-center justify-center rounded-md border border-white/40 px-4 text-xs font-semibold hover:bg-white hover:text-[#2a242b] transition">
-                        Lihat Katalog
-                    </a>
-                @endauth
-            </div>
-
-            {{-- Phone visual (kanan) --}}
-            <div class="absolute inset-y-0 right-0 hidden md:block">
-                <div class="h-full w-[420px] bg-[radial-gradient(80%_80%_at_70%_30%,rgba(255,255,255,.06),transparent_60%)]"></div>
-            </div>
+        @php
+            $bannerUrl = asset('images/banner.jpg');
+        @endphp
+        <div class="relative overflow-hidden rounded-2xl">
+            <img 
+                src="{{ $bannerUrl }}" 
+                alt="Buyee Banner" 
+                class="w-full h-auto object-cover"
+                onerror="this.onerror=null;this.src='{{ asset('images/placeholder.jpg') }}'"
+            >
         </div>
     </section>
-
+    
     {{-- ======================================================= --}}
     {{-- |           BAGIAN 2: BROWSE BY CATEGORY            | --}}
     {{-- ======================================================= --}}
-    <section class="my-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section class="mt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold">Browse By Category</h3>
+            <h3 class="text-lg font-semibold">Kategori</h3>
             <div class="flex items-center gap-2">
                 <button id="cat-prev" class="grid h-9 w-9 place-items-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40" aria-label="Scroll left">
                     <i class="fa-solid fa-chevron-left"></i>
@@ -61,15 +111,13 @@
             </div>
         </div>
       
-        <div id="cat-track" class="mt-5 flex gap-4 overflow-x-auto snap-x scroll-smooth" style="scrollbar-width: none; -ms-overflow-style: none;">
-            <style>#cat-track::-webkit-scrollbar { display: none; }</style>
-
+        <div id="cat-track" class="mt-5 flex gap-4 overflow-x-auto snap-x scroll-smooth" style="scrollbar-width: none; -ms-overflow-style: none;">        
             {{-- All Products --}}
             <a href="{{ route('catalog') }}" class="min-w-[210px] snap-start group rounded-xl border border-gray-200 bg-white p-4 text-center hover:shadow-card transition">
                 <div class="mx-auto mb-3 h-28 w-28 overflow-hidden rounded-lg bg-gray-50 ring-1 ring-gray-200">
                     <img src="{{ asset('images/carts.jpg') }}" alt="All Products" class="h-full w-full object-cover" loading="lazy" />
                 </div>
-                <div class="text-base font-semibold text-gray-700">All Products</div>
+                <div class="text-base font-semibold text-gray-700">Semua Produk</div>
             </a>
 
             {{-- Dynamic categories --}}
@@ -99,14 +147,14 @@
     {{-- ======================================================= --}}
     {{-- |          BAGIAN 3: PRODUCT GRID TABS              | --}}
     {{-- ======================================================= --}}
-    <section class="my-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section class="mt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {{-- Tabs --}}
         <div class="flex items-center gap-6 border-b border-gray-200">
             <button type="button" class="tab-button relative text-lg pb-3 font-semibold text-gray-900 after:absolute after:inset-x-0 after:-bottom-[1px] after:h-0.5 after:bg-gray-900" data-tab="new-arrival">
-                New Arrival
+                Produk Terbaru
             </button>
             <button type="button" class="tab-button pb-3 text-lg text-gray-500 hover:text-gray-900" data-tab="bestseller">
-                Bestseller
+                Produk Terlaris
             </button>
         </div>
 
@@ -157,7 +205,7 @@
                     </a>
                 </div>
             @empty
-                <div class="col-span-full text-center py-8 text-gray-500"><p>Belum ada produk bestseller.</p></div>
+                <div class="col-span-full text-center py-8 text-gray-500"><p>Belum ada produk Terlaris.</p></div>
             @endforelse
         </div>
 
@@ -168,4 +216,108 @@
         </div>
     </section>
 
+    {{-- Tambahkan script untuk tabs, carousel kategori, dan wishlist --}}
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Tabs
+      const tabs = document.querySelectorAll('.tab-button');
+      const contents = document.querySelectorAll('.tab-content');
+
+      function showTab(name) {
+        contents.forEach(c => c.style.display = 'none');
+        const active = document.getElementById('tab-content-' + name);
+        if (active) active.style.display = (name === 'new-arrival' ? 'grid' : 'grid');
+
+        tabs.forEach(b => {
+          if (b.dataset.tab === name) {
+            b.classList.remove('text-gray-500');
+            b.classList.add('text-gray-900','after:absolute','after:inset-x-0','after:-bottom-[1px]','after:h-0.5','after:bg-gray-900');
+          } else {
+            b.classList.remove('text-gray-900','after:absolute','after:inset-x-0','after:-bottom-[1px]','after:h-0.5','after:bg-gray-900');
+            b.classList.add('text-gray-500');
+          }
+        });
+      }
+
+      tabs.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+      // default
+      showTab('new-arrival');
+
+      // Category track scroll buttons
+      const track = document.getElementById('cat-track');
+      const btnPrev = document.getElementById('cat-prev');
+      const btnNext = document.getElementById('cat-next');
+      if (track && btnPrev && btnNext) {
+        btnPrev.addEventListener('click', () => {
+          track.scrollBy({ left: -Math.floor(track.clientWidth * 0.7), behavior: 'smooth' });
+        });
+        btnNext.addEventListener('click', () => {
+          track.scrollBy({ left: Math.floor(track.clientWidth * 0.7), behavior: 'smooth' });
+        });
+      }
+
+      // Wishlist toggle (AJAX)
+      window.toggleWishlist = async function(productId, el) {
+        try {
+          const resp = await fetch("{{ route('wishlist.toggle') }}", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ product_id: productId })
+          });
+
+          if (resp.status === 401) {
+            // redirect ke login dengan return url
+            localStorage.setItem('pending_wishlist_product', productId);
+            window.location.href = "{{ route('login') }}?redirect=" + encodeURIComponent(window.location.href);
+            return;
+          }
+
+          const data = await resp.json();
+          if (resp.ok) {
+            // toggle icon visual
+            if (el) {
+              const icon = el.querySelector('i');
+              if (icon) {
+                icon.classList.toggle('fa-solid');
+                icon.classList.toggle('fa-regular');
+              }
+            }
+            // optional: tampilkan toast sederhana
+            const t = document.createElement('div');
+            t.textContent = data.message || 'Berhasil';
+            t.style.position = 'fixed';
+            t.style.left = '50%';
+            t.style.transform = 'translateX(-50%)';
+            t.style.top = '16px';
+            t.style.padding = '8px 12px';
+            t.style.background = resp.ok ? 'rgba(0,0,0,0.85)' : '#ef4444';
+            t.style.color = '#fff';
+            t.style.borderRadius = '8px';
+            t.style.zIndex = 9999;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 1800);
+          } else {
+            console.error(data);
+            alert(data.message || 'Gagal menambahkan wishlist.');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Terjadi kesalahan. Coba lagi.');
+        }
+      };
+
+      // Jika ada pending wishlist setelah login, kirim otomatis
+      const pending = localStorage.getItem('pending_wishlist_product');
+      if (pending && "{{ auth()->check() }}" === "1") {
+        // cari tombol wishlist untuk produk itu dan panggil toggleWishlist
+        const btn = document.querySelector(`.wishlist-btn[data-product-id="${pending}"]`);
+        if (btn) toggleWishlist(pending, btn);
+        localStorage.removeItem('pending_wishlist_product');
+      }
+    });
+    </script>
 @endsection

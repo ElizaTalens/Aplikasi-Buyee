@@ -129,9 +129,6 @@ class OrderController extends Controller
         ]);
     }
 
-    /**
-     * Helper icon kategori.
-     */
     private function getProductIcon($categoryId)
     {
         $icons = [

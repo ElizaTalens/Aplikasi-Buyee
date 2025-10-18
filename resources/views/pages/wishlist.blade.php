@@ -1,19 +1,19 @@
 @extends('layouts.master')
 
-@section('title', 'Your Wishlist — Buyee')
+@section('title', 'Wishlist Saya — Buyee')
 
 @section('content')
 <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
     {{-- Breadcrumbs --}}
     <nav class="text-sm text-gray-500">
       <ol class="flex items-center gap-3">
-        <li><a href="{{ route('home') }}" class="hover:text-gray-900">Home</a></li>
+        <li><a href="{{ route('home') }}" class="hover:text-gray-900">Beranda</a></li>
         <li class="text-gray-300">›</li>
         <li class="text-gray-900">Wishlist</li>
       </ol>
     </nav>
 
-    <h1 class="mt-3 text-[44px] font-extrabold tracking-tight">Your Wishlist</h1>
+    <h1 class="mt-3 text-[44px] font-extrabold tracking-tight">Wishlist Saya</h1>
 
     <div class="mt-6 grid grid-cols-12 gap-8" data-wishlist>
       {{-- LEFT: items --}}
@@ -75,7 +75,7 @@
       {{-- RIGHT: Action Summary --}}
       <aside class="col-span-12 lg:col-span-4">
         <div class="rounded-3xl bg-white ring-1 ring-gray-200 p-6 sticky top-6">
-          <h3 class="text-2xl font-extrabold">Wishlist Actions</h3>
+          <h3 class="text-2xl font-extrabold">Aksi Wishlist</h3>
 
           <div class="mt-6 text-lg font-semibold text-gray-700">
             Total <span id="itemCount">{{ $wishlistItems->count() }}</span> item di wishlist

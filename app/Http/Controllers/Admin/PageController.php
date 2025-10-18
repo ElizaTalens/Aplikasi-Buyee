@@ -7,35 +7,26 @@ use Illuminate\Http\Request;
 
 class PageController extends Controller
 {
-    /**
-     * Menampilkan halaman utama dashboard admin.
-     */
+    // dashboard admin.
+   
     public function dashboard()
     {
-        // Mengembalikan view yang ada di: resources/views/admin/dashboard.blade.php
         return view('pages.dashboard');
     }
 
-    /**
-     * Menampilkan halaman manajemen produk.
-     */
+    //manajemen produk.
     public function products()
     {
         return view('admin.products');
     }
 
-    /**
-     * Menampilkan halaman manajemen pesanan.
-     * Redirect ke dashboard karena kelola pesanan sudah terintegrasi di dashboard.
-     */
+    //manajemen pesanan
     public function orders()
     {
         return redirect()->route('admin.page.dashboard')->with('activeSection', 'orders');
     }
 
-    /**
-     * Menampilkan halaman manajemen kategori.
-     */
+    //manajemen kategori
     public function categories()
     {
         return view('admin.categories');

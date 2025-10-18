@@ -2,27 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class ProductDetailController extends Controller
 {
-    public function show()
+    public function show(Product $product)
     {
-        // sementara masih statis
-        $colors = [
-            ['code' => 'brown', 'hex' => '#5d4e33'],
-            ['code' => 'green', 'hex' => '#3a564b'],
-            ['code' => 'navy',  'hex' => '#2f3f59'],
-        ];
-        $sizes = [
-            ['code' => 'S',  'label' => 'Small'],
-            ['code' => 'M',  'label' => 'Medium'],
-            ['code' => 'L',  'label' => 'Large'],
-            ['code' => 'XL', 'label' => 'X-Large'],
-        ];
-        $selectedColor = 'brown';
-        $selectedSize  = 'L';
+        if (is_string($product->images)) {
+            $images = json_decode($product->images, true) ?: [];
+        } elseif (is_array($product->images)) {
+            $images = $product->images;
+        } else {
+            $images = $product->images ?? [];
+        }
 
-        return view('pages.product-tee', compact('colors','sizes','selectedColor','selectedSize'));
+        return view('pages.product-details', [
+            'product' => $product,
+            'images' => $images,
+        ]);
     }
 }

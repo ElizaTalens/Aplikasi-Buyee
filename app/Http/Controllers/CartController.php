@@ -28,7 +28,6 @@ class CartController extends Controller
             return $item->quantity * $item->price;
         });
 
-        // Jika request mengharapkan JSON (misalnya dari API client)
         if (request()->expectsJson()) {
             return response()->json([
                 'cart_items' => $cartItems,
@@ -37,7 +36,6 @@ class CartController extends Controller
             ]);
         }
         
-        // Menampilkan view untuk browser
         return view('pages.cart', compact('cartItems', 'total'));
     }
 
@@ -57,7 +55,6 @@ class CartController extends Controller
 
         $product = Product::findOrFail($validated['product_id']);
 
-        // Validasi ketersediaan produk
         if (!$product->is_active || $product->stock_quantity < $validated['quantity']) {
             return response()->json(['message' => 'Stok produk tidak mencukupi atau tidak tersedia.'], 422);
         }
@@ -70,17 +67,15 @@ class CartController extends Controller
                 ->first();
 
             if ($cartItem) {
-                // Jika item sudah ada, update kuantitasnya
                 $newQuantity = $cartItem->quantity + $validated['quantity'];
                 if ($product->stock_quantity < $newQuantity) {
                     throw new \Exception('Stok tidak mencukupi untuk menambahkan kuantitas.');
                 }
                 $cartItem->quantity = $newQuantity;
-                $cartItem->price = $product->final_price ?? $product->price; // Selalu update harga terbaru
+                $cartItem->price = $product->final_price ?? $product->price; 
                 $cartItem->product_options = $validated['product_options'] ?? [];
                 $cartItem->save();
             } else {
-                // Jika item baru, buat entri baru
                 $cartItem = CartItem::create([
                     'user_id' => Auth::id(),
                     'product_id' => $validated['product_id'],
@@ -95,7 +90,7 @@ class CartController extends Controller
             return response()->json([
                 'message' => 'Produk berhasil ditambahkan ke keranjang!',
                 'cart_item' => $cartItem->load('product'),
-                'cart_count' => $this->getCartCount() // <-- Mengembalikan jumlah terbaru
+                'cart_count' => $this->getCartCount() 
             ], 201);
 
         } catch (\Exception $e) {
@@ -123,11 +118,9 @@ class CartController extends Controller
             
             DB::beginTransaction();
 
-            // KOREKSI UTAMA: Menggunakan relasi untuk mengambil Product
             $cartItem = CartItem::where('user_id', Auth::id())->with('product')->findOrFail($id);
             $product = $cartItem->product;
             
-            // Validasi Stok
             if (!$product || $product->stock_quantity < $validated['quantity']) {
                  throw ValidationException::withMessages(['quantity' => ['Stok produk tidak mencukupi.']]);
             }
@@ -146,11 +139,10 @@ class CartController extends Controller
             ]);
         } catch (ValidationException $e) {
             DB::rollBack();
-            // Kembalikan response 422 dengan pesan error validasi
+            
             return response()->json(['message' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            // Jika request body kosong, ini bisa jadi error 500 karena $request->validate gagal
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }
@@ -180,7 +172,6 @@ class CartController extends Controller
      */
     public function deleteMultiple(Request $request): JsonResponse
     {
-        // Catatan: Menerima JSON dari POST/_method=DELETE
         
         $validated = $request->validate([
             'ids' => 'required|array',

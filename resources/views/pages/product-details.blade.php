@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
 <head>
   <meta charset="utf-8">
   <title>{{ $product->name }} — Detail Produk</title>
@@ -29,7 +29,7 @@
     {{-- Breadcrumbs --}}
     <nav class="pt-30 text-sm text-gray-500">
       <ol class="flex items-center gap-3">
-        <li><a href="/" class="hover:text-gray-900">Home</a></li>
+        <li><a href="/" class="hover:text-gray-900">Beranda</a></li>
         <li class="text-gray-300">›</li>
         <li><a href="{{ route('catalog') }}" class="hover:text-gray-900">Produk</a></li>
         <li class="text-gray-300">›</li>
@@ -67,18 +67,6 @@
           <p class="mt-4 text-[13px] leading-6 text-gray-600 max-w-prose">
             {{ $product->description ?? 'Deskripsi produk belum tersedia.' }}
           </p>
-
-          {{-- Pilih Ukuran --}}
-          <div>
-            <div class="pt-5 *:text-sm font-medium text-gray-800">Pilih Ukuran</div>
-            <input type="hidden" name="size" id="sizeInput" value="L">
-            <div id="sizeGroup" role="radiogroup" class="mt-3 flex flex-wrap gap-3">
-              <button type="button" role="radio" aria-checked="false" data-size="S" class="inline-flex h-10 items-center rounded-full bg-gray-100 px-5 text-sm text-gray-700">Small</button>
-              <button type="button" role="radio" aria-checked="false" data-size="M" class="inline-flex h-10 items-center rounded-full bg-gray-100 px-5 text-sm text-gray-700">Medium</button>
-              <button type="button" role="radio" aria-checked="true" data-size="L" class="inline-flex h-10 items-center rounded-full bg-black px-5 text-sm font-semibold text-white">Large</button>
-              <button type="button" role="radio" aria-checked="false" data-size="XL" class="inline-flex h-10 items-center rounded-full bg-gray-100 px-5 text-sm text-gray-700">X-Large</button>
-            </div>
-          </div>
 
           {{-- Stok --}}
           <div class="mt-6 flex items-start gap-3">
@@ -135,60 +123,30 @@
 
   @include('layouts.footer')
 
-  {{-- ================================================================= --}}
-  {{-- =================== BLOK JAVASCRIPT LENGKAP =================== --}}
-  {{-- ================================================================= --}}
+  {{-- JAVASCRIPT --}}
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // --- Pemilihan Ukuran ---
-      const sizeGroup = document.getElementById('sizeGroup');
-      if(sizeGroup) {
-        sizeGroup.addEventListener('click', function(e) {
-          const button = e.target.closest('button[data-size]');
-          if (!button) return;
-
-          // Hapus status aktif dari semua tombol
-          document.querySelectorAll('#sizeGroup button').forEach(btn => {
-            btn.setAttribute('aria-checked', 'false');
-            btn.className = 'inline-flex h-10 items-center rounded-full bg-gray-100 px-5 text-sm text-gray-700';
-          });
-          
-          // Tambahkan status aktif ke tombol yang diklik
-          button.setAttribute('aria-checked', 'true');
-          button.className = 'inline-flex h-10 items-center rounded-full bg-black px-5 text-sm font-semibold text-white';
-          
-          // Update nilai input tersembunyi
-          document.getElementById('sizeInput').value = button.dataset.size;
-        });
-      }
-
       // --- Kontrol Kuantitas ---
       const qtyInput = document.getElementById('quantity');
-      const maxQty = parseInt(qtyInput.getAttribute('max'));
+      const maxQty = parseInt(qtyInput.getAttribute('max')) || 1;
 
       document.getElementById('decreaseQty').addEventListener('click', function() {
-        const currentQty = parseInt(qtyInput.value);
+        const currentQty = parseInt(qtyInput.value) || 1;
         if (currentQty > 1) {
           qtyInput.value = currentQty - 1;
         }
       });
 
       document.getElementById('increaseQty').addEventListener('click', function() {
-        const currentQty = parseInt(qtyInput.value);
+        const currentQty = parseInt(qtyInput.value) || 1;
         if (currentQty < maxQty) {
           qtyInput.value = currentQty + 1;
         }
       });
     });
 
-    /**
-     * Menampilkan notifikasi toast sederhana.
-     * @param {string} msg - Pesan yang akan ditampilkan.
-     * @param {string} type - Tipe notifikasi ('ok' atau 'error').
-     */
     function toast(msg, type = 'ok') {
       document.querySelectorAll('.app-toast').forEach(el => el.remove());
-
       const t = document.createElement('div');
       t.textContent = msg;
       t.className =
@@ -199,29 +157,18 @@
       setTimeout(() => t.remove(), 2200);
     }
 
-    /**
-     * Memperbarui badge counter keranjang di navbar.
-     * @param {number} count - Jumlah item baru di keranjang.
-     */
     function updateCartBadge(count) {
-      const updated = typeof updateCount === 'function'
-        ? updateCount('cartCount', count, { force: true })
-        : null;
-      if (!updated) {
-        console.error('Elemen counter keranjang tidak ditemukan untuk diperbarui.');
+      if (typeof updateCount === 'function') {
+        updateCount('cartCount', count, { force: true });
+        return;
       }
+      console.error('Elemen counter keranjang tidak ditemukan untuk diperbarui.');
     }
 
-    /**
-     * Mengirim data produk ke server untuk ditambahkan ke keranjang.
-     * @param {number} productId - ID produk yang akan ditambahkan.
-     */
     async function addToCart(productId) {
-      const quantity = document.getElementById('quantity').value;
-      const size = document.getElementById('sizeInput').value;
+      const quantity = parseInt(document.getElementById('quantity').value) || 1;
       const btn = document.getElementById('btnCart');
-      
-      // Simpan teks asli tombol dan tampilkan spinner
+
       const originalButtonHTML = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menambahkan...`;
@@ -236,47 +183,36 @@
           },
           body: JSON.stringify({
             product_id: productId,
-            quantity: parseInt(quantity),
-            options: {
-              size: size
-            }
+            quantity: quantity
           })
         });
-        if (response.status === 401) {
-          // Arahkan pengguna ke halaman login jika belum login
-          window.location.href = "{{ route('login') }}"; 
-          return; 
-        }
-        const data = await response.json();
 
+        if (response.status === 401) {
+          window.location.href = "{{ route('login') }}?redirect=" + encodeURIComponent(window.location.href);
+          return;
+        }
+
+        const data = await response.json();
         if (response.ok) {
           toast('Produk berhasil ditambahkan!', 'ok');
-          
-          // **FIX UTAMA**: Update badge dengan jumlah dari respons server
           if (typeof data.cart_count !== 'undefined') {
             updateCartBadge(data.cart_count);
           }
         } else {
-          // Tampilkan pesan error dari server jika ada
           toast(data.message || 'Gagal menambahkan produk.', 'error');
         }
       } catch (error) {
         console.error('Error:', error);
         toast('Terjadi kesalahan. Coba lagi nanti.', 'error');
       } finally {
-        // Kembalikan tombol ke keadaan semula
         btn.disabled = false;
         btn.innerHTML = originalButtonHTML;
       }
     }
 
-    /**
-     * Menambahkan atau menghapus produk dari wishlist.
-     * @param {number} productId - ID produk.
-     */
     async function addToWishlist(productId) {
       try {
-        const response = await fetch("{{ route('wishlist.toggle') }}", { // Gunakan route toggle untuk wishlist
+        const response = await fetch("{{ route('wishlist.toggle') }}", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -284,31 +220,42 @@
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
           },
           body: JSON.stringify({
-            product_id: productId
+            product_id: productId,
+            return_url: window.location.href
           })
         });
+
         if (response.status === 401) {
-            // Tambahkan parameter 'intended' ke URL login
-            window.location.href = "{{ route('login') }}?redirect_to=" + encodeURIComponent(window.location.href); 
-            return;
+          localStorage.setItem('pending_wishlist_product', productId);
+          window.location.href = "{{ route('login') }}?redirect=" + encodeURIComponent(window.location.href);
+          return;
         }
+
         const data = await response.json();
         if (response.ok) {
           toast(data.message, 'ok');
-
-          if (typeof updateCount === 'function' && typeof data.count !== 'undefined') {
+          if (typeof data.count !== 'undefined') {
             updateCount('wishlistCount', data.count, { force: true });
-          } else if (typeof updateWishlistCountFromDB === 'function') {
-            updateWishlistCountFromDB();
           }
-
+          localStorage.removeItem('pending_wishlist_product');
         } else {
-          toast(data.message || 'Gagal.', 'error');
+          toast(data.message || 'Gagal menambahkan ke wishlist.', 'error');
         }
       } catch(error) {
+        console.error('Error:', error);
         toast('Terjadi kesalahan pada wishlist.', 'error');
       }
     }
+
+    // Tambahkan pending wishlist setelah login
+    document.addEventListener('DOMContentLoaded', function() {
+      const pendingProductId = localStorage.getItem('pending_wishlist_product');
+      if (pendingProductId) {
+        if ("{{ auth()->check() }}") {
+          addToWishlist(pendingProductId);
+        }
+      }
+    });
   </script>
 
 </body>

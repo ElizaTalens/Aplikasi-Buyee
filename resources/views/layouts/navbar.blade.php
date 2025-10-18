@@ -50,9 +50,7 @@
 
     {{-- Nav menu --}}
     <nav class="hidden md:flex items-center gap-6 text-lg">
-      <a href="{{ route('home') }}" class="font-semibold text-gray-900 hover:text-gray-500">Home</a>
-      
-      {{-- FIX: Catalog mengarah ke login jika belum auth --}}
+      <a href="{{ route('home') }}" class="font-semibold text-gray-900 hover:text-gray-500">Beranda</a>
       @auth
         <a href="{{ route('catalog') }}" class="font-semibold text-gray-900 hover:text-gray-500">Katalog</a>
       @else
@@ -60,7 +58,6 @@
       @endauth
     </nav>
 
-    {{-- Icons --}}
     {{-- Wishlist --}}
     @auth
       <a href="{{ route('wishlist.index') }}" class="relative inline-block w-6 h-6" aria-label="Wishlist">

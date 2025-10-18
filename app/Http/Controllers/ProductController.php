@@ -17,22 +17,15 @@ class ProductController extends Controller
         $categories = Category::all();
         $query = Product::with('category')->where('is_active', true);
         
-        // <-- ADD: jika link dari home mengirim ?category=..., samakan ke 'group'
         if ($request->filled('category') && ! $request->has('group')) {
             $request->merge(['group' => $request->query('category')]);
         }
 
-        // Cek apakah ini adalah permintaan API atau permintaan Web
         if ($request->expectsJson() || $request->is('api/*')) {
-             // Jika API, panggil metode apiIndex untuk pemrosesan API
              return $this->apiIndex($request);
         }
         
-        // Web request logic
-        $pageTitle = 'Semua Produk'; // Judul default
-        
-        // >> KOREKSI DITERAPKAN DI SINI <<
-        // Ambil slug dari parameter 'category' (dari homepage) atau 'group' (dari sidebar lama)
+        $pageTitle = 'Semua Produk'; 
         $filterSlug = $request->query('category') ?? $request->query('group');
 
         // --- FILTER KATEGORI BERDASARKAN SLUG ---
@@ -62,9 +55,6 @@ class ProductController extends Controller
              $query->where('price', '<=', $request->max_price);
         }
         
-        // Fitur Pencarian & History (dihilangkan karena hanya placeholder di source Anda)
-
-        // Logika Sorting (Digunakan untuk filter Best Seller, Price, dll)
         
         // Ambil parameter 'sort' (dari checkbox Best Seller) dan 'sort_by' (dari dropdown sorting, jika ada)
         $sortByCheckbox = $request->input('sort');
@@ -82,8 +72,7 @@ class ProductController extends Controller
                 default: $query->orderBy('created_at', 'desc'); break; 
             }
         }
-        // >> END KOREKSI <<
-
+        
         $products = $query->paginate(9)->withQueryString();
 
         // Kirim semua data yang dibutuhkan, termasuk $pageTitle
@@ -177,7 +166,7 @@ class ProductController extends Controller
     }
 
     /**
-     * API: Get all products with pagination and filters
+     * API: Mendapatkan daftar produk dengan filter dan sorting.
      */
     public function apiIndex(Request $request)
     {
@@ -209,7 +198,7 @@ class ProductController extends Controller
     }
 
     /**
-     * API: Get featured products
+     * API: Dapatkan produk unggulan
      */
     public function featured()
     {
@@ -224,7 +213,7 @@ class ProductController extends Controller
     }
 
     /**
-     * API: Get products by category
+     * API: Dapatkan produk berdasarkan kategori
      */
     public function byCategory($categoryId)
     {

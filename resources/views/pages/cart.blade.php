@@ -1,26 +1,25 @@
 @extends('layouts.master')
 
-@section('title', 'Your Cart — Buyee')
+@section('title', 'Keranjang Saya — Buyee')
 
 @section('content')
 <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
     {{-- Breadcrumbs --}}
     <nav class="text-sm text-gray-500">
       <ol class="flex items-center gap-3">
-        <li><a href="{{ route('home') }}" class="hover:text-gray-900">Home</a></li>
+        <li><a href="{{ route('home') }}" class="hover:text-gray-900">Beranda</a></li>
         <li class="text-gray-300">›</li>
-        <li class="text-gray-900">Cart</li>
+        <li class="text-gray-900">Keranjang</li>
       </ol>
     </nav>
 
-    <h1 class="mt-3 text-[44px] font-extrabold tracking-tight">Your Cart</h1>
+    <h1 class="mt-3 text-[44px] font-extrabold tracking-tight">Keranjang Saya</h1>
 
     <div class="mt-6 grid grid-cols-12 gap-8" data-cart id="cartRoot">
       {{-- KIRI: Daftar Item --}}
       <section class="col-span-12 lg:col-span-8">
         <div class="rounded-3xl bg-white ring-1 ring-gray-200">
             
-            {{-- TOMBOL CEKLIS SEMUA BARU --}}
             @if(count($cartItems) > 0)
             <div class="p-4 border-b border-gray-100 flex items-center justify-between">
                 <label class="inline-flex items-center gap-2 text-sm font-semibold">
@@ -35,11 +34,8 @@
             @endif
             
           <ul id="cart-items-list" class="divide-y divide-gray-200">
-            {{-- Loop dinamis untuk setiap item di keranjang --}}
             @forelse ($cartItems as $item)
               <li class="flex items-center gap-6 p-6" data-row data-price="{{ $item->product->price }}" data-id="{{ $item->id }}">
-                
-                {{-- CHECKBOX ITEM BARU --}}
                 <input type="checkbox" checked class="item-checkbox h-5 w-5 rounded border-gray-300 text-pink-600 focus:ring-pink-500/70 shrink-0 self-center">
 
                 <div class="h-28 w-28 shrink-0 overflow-hidden rounded-xl ring-1 ring-gray-200 bg-gray-50 grid place-items-center">
@@ -90,11 +86,10 @@
             </div>
           </dl>
           
-          {{-- KOREKSI: Tombol Checkout memanggil fungsi JS --}}
           <button type="button" data-action="checkout"
             id="checkout-button"
             class="mt-6 inline-flex w-full items-center justify-center rounded-full bg-black px-6 py-4 text-white font-semibold hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed">
-            Go to Checkout
+            Checkout
             <i class="fa-solid fa-arrow-right-long ml-3"></i>
           </button>
         </div>
@@ -196,7 +191,7 @@
     async function changeQty(button, amount) {
         const row = button.closest('[data-row]');
         const qtyEl = row.querySelector('[data-qty]');
-        const cartId = row.dataset.id; // Menggunakan data-id
+        const cartId = row.dataset.id; 
         const maxStock = Number(qtyEl.dataset.maxStock || 99); 
         let currentQty = Number(qtyEl.textContent);
         const newQty = currentQty + amount;
@@ -221,20 +216,19 @@
         row.querySelectorAll('button').forEach(btn => btn.disabled = false);
 
         if (success) {
-            qtyEl.textContent = newQty; // Update UI jika sukses
-            recalculateTotals(); // Hitung ulang total
+            qtyEl.textContent = newQty; 
+            recalculateTotals();
             if (typeof updateCartCountFromDB === 'function') updateCartCountFromDB();
         } 
     }
-    
-    // Pastikan removeItem memanggil recalculateTotals setelah menghapus baris
+    // FUNGSI UTAMA HAPUS ITEM: removeItem
     async function removeItem(button) {
         if (!confirm('Apakah Anda yakin ingin menghapus item ini dari keranjang?')) {
             return;
         }
 
         const row = button.closest('[data-row]');
-        const cartId = row.dataset.id; // Menggunakan data-id
+        const cartId = row.dataset.id; 
         button.disabled = true;
 
         try {
@@ -245,7 +239,7 @@
 
             if (response.ok) {
                 row.remove();
-                recalculateTotals(); // PENTING: Hitung ulang setelah remove
+                recalculateTotals(); 
                 if (typeof updateCartCountFromDB === 'function') updateCartCountFromDB();
             } else {
                 alert('Gagal menghapus item. Silakan coba lagi.');
@@ -262,7 +256,7 @@
         const selectedIds = [];
         document.querySelectorAll('[data-row]').forEach(row => {
             if (row.querySelector('.item-checkbox').checked) {
-                selectedIds.push(row.dataset.id); // Menggunakan data-id
+                selectedIds.push(row.dataset.id); 
             }
         });
 
@@ -275,7 +269,6 @@
             return;
         }
 
-        // KOREKSI: Menggunakan method POST + _method=DELETE untuk penghapusan massal
         const deleteData = {
             ids: selectedIds,
             _method: 'DELETE', 
@@ -284,9 +277,9 @@
 
         try {
             const response = await fetch(`/cart/delete-multiple`, { 
-                method: 'POST', // Kirim sebagai POST
+                method: 'POST', 
                 headers: { 
-                    'Content-Type': 'application/json', // Kirim sebagai JSON
+                    'Content-Type': 'application/json', 
                     'X-CSRF-TOKEN': csrfToken 
                 },
                 body: JSON.stringify(deleteData) 
@@ -294,7 +287,6 @@
 
             if (response.ok) {
                 alert('Item berhasil dihapus!');
-                // Hapus baris yang sesuai dari DOM
                 selectedIds.forEach(id => {
                     const rowToRemove = document.querySelector(`[data-id="${id}"]`);
                     if(rowToRemove) rowToRemove.remove();

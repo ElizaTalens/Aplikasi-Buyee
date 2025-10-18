@@ -13,7 +13,6 @@ class Address extends Model
         'province',
         'postal_code',
         'country',
-        // tambahkan field lain sesuai kebutuhan
     ];
 
     public function user()

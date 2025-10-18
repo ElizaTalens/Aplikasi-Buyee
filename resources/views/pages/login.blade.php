@@ -78,19 +78,13 @@
             <a href="{{ route('register.form') }}" class="register-link">Daftar disini</a>
         </div>
 
-        {{-- Error global (pertama) --}}
+
         @if($errors->any())
             <div class="error">{{ $errors->first() }}</div>
         @endif
 
         <form method="POST" action="{{ route('login.submit') }}" autocomplete="off">
             @csrf
-
-            <button type="button" class="google-btn" onclick="alert('Fitur Google belum tersedia')">
-                <img src="/images/google.png" alt="google"> Masuk dengan Google
-            </button>
-
-            <div class="or">atau</div>
 
             <input type="text" name="email" placeholder="Email" value="{{ old('email') }}" required>
             @error('email') <div class="error">{{ $message }}</div> @enderror

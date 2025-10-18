@@ -10,7 +10,7 @@ use Illuminate\View\View;
 class CategoryController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Menampilkan daftar kategori.
      */
     public function index(Request $request): JsonResponse|View
     {
@@ -30,7 +30,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Menampilkan form untuk membuat kategori baru.
      */
     public function create(): View
     {
@@ -38,7 +38,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Menyimpan kategori baru ke dalam database.
      */
     public function store(Request $request): JsonResponse
     {
@@ -59,7 +59,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Menampilkan kategori yang ditentukan.
      */
     public function show(string $id): JsonResponse|View
     {
@@ -75,7 +75,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Menampilkan form untuk mengedit kategori yang ditentukan.
      */
     public function edit(string $id): View
     {
@@ -84,7 +84,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Pembaruan kategori yang ditentukan.
      */
     public function update(Request $request, string $id): JsonResponse
     {
@@ -107,13 +107,12 @@ class CategoryController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Hapus kategori yang ditentukan.
      */
     public function destroy(string $id): JsonResponse
     {
         $category = Category::findOrFail($id);
         
-        // Check if category has products
         if ($category->products()->count() > 0) {
             return response()->json([
                 'message' => 'Cannot delete category with existing products'
@@ -128,7 +127,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * Get active categories for frontend
+     * Mengambil semua kategori yang aktif.
      */
     public function active(): JsonResponse
     {

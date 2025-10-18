@@ -9,7 +9,7 @@
     {{-- Breadcrumbs --}}
     <nav class="text-sm text-gray-500 pb-5">
       <ol class="flex items-center gap-3">
-        <li><a href="{{ route('home') }}" class="hover:text-gray-900">Home</a></li>
+        <li><a href="{{ route('home') }}" class="hover:text-gray-900">Beranda</a></li>
         <li class="text-gray-300">›</li>
         <li class="text-gray-900">Profil Saya</li>
       </ol>

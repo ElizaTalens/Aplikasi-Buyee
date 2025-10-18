@@ -76,15 +76,6 @@
         @if(session('success'))
             <div class="success">{{ session('success') }}</div>
         @endif
-        @if($errors->has('google'))
-            <div class="error">{{ $errors->first('google') }}</div>
-        @endif
-
-        <a href="{{ route('auth.google.redirect') }}" class="google-btn">
-            <img src="/images/google.png" alt="Google"> Daftar dengan Google
-        </a>
-
-        <div class="or">atau</div>
 
         <form method="POST" action="{{ route('register') }}" autocomplete="off">
             @csrf

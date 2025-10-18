@@ -2,28 +2,37 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\Product;
 use App\Models\Category;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
 
 class HomeController extends Controller
 {
-    /**
-     * Menampilkan halaman utama (homepage).
-     */
-    public function index(): View
+    public function index()
     {
-        // Data untuk komponen "New Arrival" & "Bestseller"
-        $newArrivals = Product::where('is_active', true)->latest()->take(8)->get();
-        $bestsellers = Product::where('is_active', true)->orderBy('sales_count', 'desc')->take(8)->get();
+        // Kategori (untuk section kategori)
+        $categories = Category::orderBy('name')->get();
 
-        // Data untuk komponen "Browse By Category"
-        $categories = Category::where('is_active', true)
-            ->whereNull('parent_id')
+        // Produk terbaru
+        $newArrivals = Product::where('is_active', 1)
+            ->orderByDesc('created_at')
+            ->take(12)
             ->get();
 
-        // Kirim SEMUA data yang dibutuhkan ke view 'pages.home'
-        return view('pages.home', compact('newArrivals', 'bestsellers', 'categories'));
+        // Produk terlaris: jumlah qty dari order_items (hanya order dengan status 'selesai')
+        $bestsellers = Product::select('products.*', DB::raw('(
+            SELECT COALESCE(SUM(oi.qty),0)
+            FROM order_items AS oi
+            JOIN orders AS o ON oi.order_id = o.id
+            WHERE oi.product_id = products.id
+              AND o.status = "selesai"
+        ) AS total_sold'))
+            ->where('is_active', 1)
+            ->orderByDesc('total_sold')
+            ->take(12)
+            ->get();
+
+        return view('pages.home', compact('categories', 'newArrivals', 'bestsellers'));
     }
 }

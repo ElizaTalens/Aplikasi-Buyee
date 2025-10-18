@@ -8,11 +8,10 @@ use Illuminate\Http\Request;
 class Authenticate extends Middleware
 {
     /**
-     * Get the path the user should be redirected to when they are not authenticated.
+     * Dapatkan URL redirect untuk pengguna yang tidak terautentikasi.
      */
     protected function redirectTo(Request $request): ?string
     {
-        // For API requests, return null to trigger a JSON response
         if ($request->expectsJson() || $request->is('api/*')) {
             return null;
         }
@@ -20,12 +19,9 @@ class Authenticate extends Middleware
         return route('login');
     }
 
-    /**
-     * Handle an unauthenticated user.
-     */
+    // Handle unauthenticated requests
     protected function unauthenticated($request, array $guards)
     {
-        // For API requests, return JSON response
         if ($request->expectsJson() || $request->is('api/*')) {
             abort(response()->json([
                 'message' => 'Unauthenticated.',
@@ -33,7 +29,6 @@ class Authenticate extends Middleware
             ], 401));
         }
 
-        // For web requests, redirect to login
         return redirect()->guest(route('login'));
     }
 }

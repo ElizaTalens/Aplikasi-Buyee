@@ -5,212 +5,131 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Admin - Buyee</title>
 <meta name="csrf-token" content="{{ csrf_token() }}">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <style>
-:root {
-    --primary-pink: #FFB6C1;
-    --light-pink: #FFF0F5;
-    --medium-pink: #FFC0CB;
-    --dark-pink: #FF91A4;
-    --soft-pink: #FFCCCB;
-    --accent-pink: #FF69B4;
+:root{
+  --nav-dark: #4c454d;
+  --accent-pink: #f27ca5;
+  --soft-bg: #f7f7f7;
+  --card-bg: #ffffff;
+  --muted-text: #6b7280;
+  --text-dark: #2a242b;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+}
+
+html, body, input, button, select, textarea, a, p, h1, h2, h3, h4, h5, h6, .nav-link, .btn, .table {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
 }
 
 body {
-    background-color: var(--light-pink);
+  background-color: var(--soft-bg);
+  color: var(--text-dark);
 }
 
 .sidebar {
-    min-height: 100vh;
-    background: linear-gradient(135deg, var(--primary-pink) 0%, var(--medium-pink) 50%, var(--soft-pink) 100%);
-    box-shadow: 2px 0 15px rgba(255, 182, 193, 0.3);
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--nav-dark) 0%, #352a30 100%);
+  color: #fff;
+  box-shadow: 2px 0 18px rgba(42,36,43,0.06);
 }
 
 .sidebar .nav-link {
-    color: rgba(255,255,255,0.9);
-    padding: 12px 20px;
-    border-radius: 12px;
-    margin: 4px 0;
-    transition: all 0.3s ease;
-    font-weight: 500;
+  color: rgba(255,255,255,0.92);
+  padding: 10px 16px;
+  border-radius: 10px;
+  margin: 6px 0;
+  transition: transform .18s ease, background .18s ease, color .18s ease;
 }
-
+.sidebar .nav-link i {
+  color: rgba(255,255,255,0.9);
+  width: 18px;
+  text-align: center;
+}
 .sidebar .nav-link:hover,
 .sidebar .nav-link.active {
-    background: rgba(255,255,255,0.25);
-    color: white;
-    transform: translateX(8px);
-    box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05);
+  transform: translateX(6px);
+  color: #fff;
+  text-decoration: none;
 }
 
-.main-content {
-    background: linear-gradient(135deg, var(--light-pink) 0%, #ffffff 100%);
-    min-height: 100vh;
-}
 
-.stat-card {
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 8px 25px rgba(255, 182, 193, 0.15);
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255, 182, 193, 0.1);
-}
-
-.stat-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 15px 35px rgba(255, 182, 193, 0.25);
-}
-
-.stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    color: white;
-}
-
+.stat-card,
 .table-container {
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 8px 25px rgba(255, 182, 193, 0.15);
-    overflow: hidden;
-    border: 1px solid rgba(255, 182, 193, 0.1);
+  background: var(--card-bg);
+  border-radius: 14px;
+  border: 1px solid rgba(42,36,43,0.04);
+  box-shadow: 0 8px 22px rgba(42,36,43,0.04);
+  transition: transform .18s ease, box-shadow .18s ease;
 }
 
-.btn-custom {
-    border-radius: 12px;
-    padding: 10px 20px;
-    transition: all 0.3s ease;
-    font-weight: 500;
+/* Stat card hover  */
+.stat-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 40px rgba(42,36,43,0.08);
 }
 
+/* Stat icon accent */
+.stat-icon {
+  width: 56px;
+  height: 56px;
+  display:inline-grid;
+  place-items:center;
+  border-radius:10px;
+  background: linear-gradient(135deg, #f27ca5 0%, #ffb6c1 100%);
+  color: #fff;
+  font-size:18px;
+  box-shadow: 0 6px 18px rgba(42,36,43,0.06);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+
+/* Stat icon hover kecil agar ada feedback */
+.stat-icon:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(42,36,43,0.10);
+}
+
+/* Primary button uses accent pink */
 .btn-primary {
-    background: linear-gradient(45deg, var(--primary-pink), var(--accent-pink));
-    border: none;
-    color: white;
+  background: linear-gradient(90deg, var(--accent-pink), #ff95b8);
+  border: none;
+  color: #fff;
+  transition: filter .12s ease, box-shadow .12s ease, transform .12s ease;
 }
-
 .btn-primary:hover {
-    background: linear-gradient(45deg, var(--accent-pink), var(--dark-pink));
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3);
+  filter: brightness(.98);
+  box-shadow: 0 10px 26px rgba(242,124,165,0.16);
+  transform: translateY(-2px);
 }
 
-.modal-header {
-    background: linear-gradient(135deg, var(--primary-pink) 0%, var(--accent-pink) 100%);
-    color: white;
-    border-radius: 15px 15px 0 0;
+/* Keep table row hover */
+.table-hover tbody tr:hover { background-color: rgba(42,36,43,0.03); }
+
+/* Badges */
+.bg-success { background: linear-gradient(90deg,#dcfce7,#bbf7d0) !important; color: var(--success) !important; }
+.bg-warning { background: linear-gradient(90deg,#fff7ed,#ffedd5) !important; color: var(--warning) !important; }
+.bg-info    { background: linear-gradient(90deg,#eef2ff,#e9f0ff) !important; color:#0b69a3 !important; }
+.bg-danger  { background: linear-gradient(90deg,#ffe6ea,#ffd1df) !important; color: var(--danger) !important; }
+
+/* Inputs focus warna aksen */
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent-pink);
+  box-shadow: 0 0 0 0.12rem rgba(242,124,165,0.12);
 }
 
-.form-control:focus {
-    border-color: var(--primary-pink);
-    box-shadow: 0 0 0 0.2rem rgba(255, 182, 193, 0.25);
-}
+/* Page title color */
+.page-title { color: var(--nav-dark); font-weight: 700; }
 
-.form-select:focus {
-    border-color: var(--primary-pink);
-    box-shadow: 0 0 0 0.2rem rgba(255, 182, 193, 0.25);
-}
+/* small muted helper */
+.text-muted { color: var(--muted-text) !important; }
 
-.status-badge {
-    font-size: 0.8rem;
-    padding: 6px 14px;
-    border-radius: 25px;
-    font-weight: 500;
-}
-
-.bg-success {
-    background: linear-gradient(45deg, #ff9a9e, #fecfef) !important;
-    color: #8B5A6B !important;
-}
-
-.bg-warning {
-    background: linear-gradient(45deg, #ffeaa7, #fab1a0) !important;
-    color: #636e72 !important;
-}
-
-.bg-info {
-    background: linear-gradient(45deg, #a8edea, #fed6e3) !important;
-    color: #2d3436 !important;
-}
-
-.bg-danger {
-    background: linear-gradient(45deg, #fd79a8, #fdcb6e) !important;
-    color: #2d3436 !important;
-}
-
-.border-bottom {
-    border-color: rgba(255, 182, 193, 0.2) !important;
-}
-
-.bg-light {
-    background: var(--light-pink) !important;
-}
-
-.table-hover tbody tr:hover {
-    background-color: rgba(255, 182, 193, 0.1);
-}
-
-.btn-outline-primary {
-    color: var(--accent-pink);
-    border-color: var(--primary-pink);
-}
-
-.btn-outline-primary:hover {
-    background-color: var(--primary-pink);
-    border-color: var(--primary-pink);
-    color: white;
-}
-
-.btn-outline-danger {
-    color: #e17055;
-    border-color: #e17055;
-}
-
-.btn-outline-danger:hover {
-    background-color: #e17055;
-    border-color: #e17055;
-}
-
-.btn-outline-info {
-    color: #00b894;
-    border-color: #00b894;
-}
-
-.btn-outline-info:hover {
-    background-color: #00b894;
-    border-color: #00b894;
-}
-
-.btn-outline-success {
-    color: var(--accent-pink);
-    border-color: var(--medium-pink);
-}
-
-.btn-outline-success:hover {
-    background-color: var(--medium-pink);
-    border-color: var(--medium-pink);
-    color: white;
-}
-
-.page-title {
-    color: #8B5A6B;
-    font-weight: 600;
-}
-
-.brand-title {
-    font-weight: 700;
-    font-size: 1.8rem;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.admin-subtitle {
-    font-size: 0.9rem;
-    opacity: 0.8;
+/* responsive tweak tetap sama fungsionalitas */
+@media (max-width: 900px) {
+  .sidebar { position: static; width: 100%; display:flex; gap:8px; overflow:auto; }
 }
 </style>
 </head>
@@ -219,7 +138,7 @@ body {
 <div class="container-fluid">
     <div class="row">
         <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-            <div class="position-sticky pt-3">
+            <div class="position-sticky pt-4">
                 <div class="text-center mb-4">
                     <h4 class="text-white brand-title"><i class="fas fa-heart me-2"></i> Buyee</h4>
                     <small class="text-white admin-subtitle">Admin Panel</small>
@@ -450,7 +369,6 @@ body {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
 <script>
-// [PERBAIKAN] Kode JavaScript dengan URL API yang benar
 let currentProductId = null;
 let currentOrderId = null;
 let currentCategoryId = null;
@@ -463,29 +381,42 @@ const getStatusBadge = (status) => {
         'dikirim': 'bg-info',
         'selesai': 'bg-success',
         'batal': 'bg-danger',
-        'pending': 'bg-warning' // Tambahkan pending
+        'pending': 'bg-warning' 
     };
     return `<span class="badge status-badge ${statuses[status] || 'bg-secondary'}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
 }
 
+
 function closeAllModalsAndCleanUp() {
-    const modals = document.querySelectorAll('.modal.show');
-    modals.forEach(modal => {
-        const modalInstance = bootstrap.Modal.getInstance(modal);
-        if (modalInstance) {
-            modalInstance.hide();
+    document.querySelectorAll('.modal.show').forEach(modal => {
+        try {
+            const inst = bootstrap.Modal.getInstance(modal) || new bootstrap.Modal(modal);
+            inst.hide();
+        } catch (e) {
+            modal.classList.remove('show');
+            modal.style.display = 'none';
         }
     });
-    const backdrops = document.querySelectorAll('.modal-backdrop');
-    backdrops.forEach(backdrop => {
-        backdrop.remove();
-    });
+
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
     document.body.classList.remove('modal-open');
     document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
 }
 
+document.addEventListener('hidden.bs.modal', function () {
+    setTimeout(() => {
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    }, 50);
+});
+
+
 function showSection(section) {
+    // HAPUS modal / backdrop sebelum mengganti section
+    closeAllModalsAndCleanUp();
+
     document.querySelectorAll('.main-content > div[id$="-section"]').forEach(s => s.style.display = 'none');
     document.getElementById(`${section}-section`).style.display = 'block';
     document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
@@ -502,11 +433,11 @@ function showSection(section) {
         loadRecentOrders();
     }
     if (section === 'products') {
-        loadProducts(); // Panggil tanpa filter awal
+        loadProducts(); 
         loadCategoriesForProductSection();
     }
     if (section === 'orders') {
-        loadOrders(); // Panggil tanpa filter awal
+        loadOrders(); 
     }
     if (section === 'categories') loadCategories();
 }
@@ -514,7 +445,6 @@ function showSection(section) {
 async function loadDashboardStats() {
     try {
         console.log('Loading dashboard stats...');
-        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/stats', {
             credentials: 'same-origin',
             headers: {
@@ -531,7 +461,6 @@ async function loadDashboardStats() {
         const data = await response.json();
         console.log('Stats data received:', data);
         
-        // Update statistics
         const productsElement = document.querySelector('#dashboard-section h3[data-stat="products"]');
         const ordersElement = document.querySelector('#dashboard-section h3[data-stat="orders"]');
         const usersElement = document.querySelector('#dashboard-section h3[data-stat="users"]');
@@ -545,14 +474,12 @@ async function loadDashboardStats() {
         console.log('Dashboard stats updated successfully');
     } catch (error) {
         console.error('Gagal memuat statistik:', error);
-        // alert('Gagal memuat statistik dashboard: ' + error.message);
     }
 }
 
 async function loadRecentOrders() {
     try {
         console.log('Loading recent orders for dashboard...');
-        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/orders', {
             credentials: 'same-origin',
             headers: {
@@ -575,8 +502,6 @@ async function loadRecentOrders() {
         }
         
         dashboardTbody.innerHTML = '';
-        
-        // Show only the 5 most recent orders
         const recentOrders = orders.slice(0, 5);
         if (recentOrders.length === 0) {
             dashboardTbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Tidak ada pesanan terbaru.</td></tr>';
@@ -584,7 +509,6 @@ async function loadRecentOrders() {
         }
 
         recentOrders.forEach(order => {
-            // Menggunakan properti customer_name dari order object
             const customerName = order.customer_name || (order.user ? order.user.name : 'N/A'); 
             const row = `
                 <tr>
@@ -609,15 +533,13 @@ async function loadRecentOrders() {
 
 async function loadCategoriesForProductSection() {
     try {
-        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/categories');
         const categories = await response.json();
         const select = document.querySelector('#productFilterCategory');
         if (!select) return;
         select.innerHTML = '<option value="">Semua Kategori</option>';
         categories.forEach(c => select.innerHTML += `<option value="${c.id}">${c.name}</option>`);
-        
-        // Juga update dropdown di Product Modal
+    
         const modalSelect = document.getElementById('productCategory');
         if (modalSelect) {
             modalSelect.innerHTML = '<option value="">Pilih Kategori</option>';
@@ -629,10 +551,8 @@ async function loadCategoriesForProductSection() {
     }
 }
 
-// >> PERBAIKAN FUNGSI LOAD PRODUCTS (Menambahkan Parameter Filter)
 async function loadProducts(query = '', categoryId = '') {
     try {
-        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         let url = '/admin/api/products';
         const params = [];
         if (query) params.push(`query=${encodeURIComponent(query)}`);
@@ -657,8 +577,6 @@ async function loadProducts(query = '', categoryId = '') {
             // Perbaikan untuk image
             let imageUrl = 'https://via.placeholder.com/50x50?text=No+Img';
             if (p.images && p.images.length > 0) {
-                // Di AdminController.php yang lama, field-nya adalah 'images' (JSON array)
-                // Kita asumsikan itu adalah array of paths, dan kita ambil yang pertama.
                 imageUrl = `/storage/${p.images[0]}`; 
             } else if (p.image) {
                  // Untuk kode yang menggunakan kolom 'image' (seperti di AdminController.php yang lama yang direvisi)
@@ -700,7 +618,6 @@ async function editProduct(id) {
     document.getElementById('image-preview').innerHTML = '';
     await loadCategoriesForProductSection(); // Panggil fungsi yang sudah diupdate
     try {
-        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch(`/admin/api/products/${id}`);
         const data = await response.json();
         document.getElementById('productName').value = data.name;
@@ -741,7 +658,6 @@ async function openProductModal() {
     productModal.show();
 }
 
-// Fungsi loadCategoriesForProductModal DIHAPUS, digantikan oleh loadCategoriesForProductSection
 
 async function saveProduct() {
     console.log('Saving product...');
@@ -767,7 +683,6 @@ async function saveProduct() {
     }
     
     try {
-        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/products/save', {
             method: 'POST',
             body: formData,
@@ -790,7 +705,6 @@ async function saveProduct() {
                     errorMessage += `: ${errorJson.message}`;
                 } else if (errorJson.errors) {
                     errorMessage += ': Validasi gagal, cek konsol.';
-                    // Tampilkan error validasi Laravel jika ada
                     const errors = errorJson.errors;
                     let validationMessage = '';
                     for (const field in errors) {
@@ -800,7 +714,6 @@ async function saveProduct() {
                     return;
                 }
             } catch (e) {
-                // Jika bukan JSON
             }
             throw new Error(errorMessage);
         }
@@ -822,7 +735,6 @@ async function saveProduct() {
 async function deleteProduct(id) {
     if (confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
         try {
-            // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
             const response = await fetch(`/admin/api/products/delete/${id}`, {
                 method: 'DELETE',
                 headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
@@ -840,7 +752,6 @@ async function deleteProduct(id) {
 
 async function loadCategories() {
     try {
-        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/categories');
         const categories = await response.json();
         const tbody = document.querySelector('#categories-table-body');
@@ -880,7 +791,6 @@ async function editCategory(id) {
     currentCategoryId = id;
     document.getElementById('categoryModalTitle').textContent = 'Edit Kategori';
     try {
-        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch(`/admin/api/categories/${id}`);
         const data = await response.json();
         document.getElementById('categoryName').value = data.name;
@@ -903,7 +813,6 @@ async function saveCategory() {
         name: document.getElementById('categoryName').value,
     };
     try {
-        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/categories/save', {
             method: 'POST',
             headers: { 
@@ -914,7 +823,6 @@ async function saveCategory() {
             body: JSON.stringify(categoryData)
         });
         
-        // Cek jika response bukan OK (misal: 400, 422, 500)
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Save category response error:', errorText);
@@ -926,7 +834,6 @@ async function saveCategory() {
                     errorMessage += `: ${errorJson.message}`;
                 } else if (errorJson.errors) {
                     errorMessage += ': Validasi gagal, cek konsol.';
-                    // Tampilkan error validasi Laravel jika ada
                     const errors = errorJson.errors;
                     let validationMessage = '';
                     for (const field in errors) {
@@ -936,19 +843,17 @@ async function saveCategory() {
                     return;
                 }
             } catch (e) {
-                // Jika bukan JSON, tampilkan saja status HTTP
             }
             throw new Error(errorMessage); 
         }
         
-        // Respons yang sukses
         const result = await response.json();
         alert(result.message);
         
         if (response.ok) {
             closeAllModalsAndCleanUp();
             loadCategories();
-            loadCategoriesForProductSection(); // Refresh category list in product section
+            loadCategoriesForProductSection();
         }
     } catch (error) {
         console.error('Gagal menyimpan kategori:', error);
@@ -959,7 +864,6 @@ async function saveCategory() {
 async function deleteCategory(id) {
     if (confirm('Yakin ingin menghapus kategori ini? Semua produk di dalamnya mungkin tidak akan tampil. Lanjutkan?')) {
         try {
-            // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
             const response = await fetch(`/admin/api/categories/delete/${id}`, {
                 method: 'DELETE',
                 headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
@@ -967,7 +871,7 @@ async function deleteCategory(id) {
             
             if (!response.ok) {
                 const errorJson = await response.json();
-                if (response.status === 409) { // Konflik, kategori masih punya produk
+                if (response.status === 409) {
                     alert(errorJson.message);
                     return;
                 }
@@ -978,7 +882,7 @@ async function deleteCategory(id) {
             alert(result.message);
             if (response.ok) {
                 loadCategories();
-                loadCategoriesForProductSection(); // Refresh category list in product section
+                loadCategoriesForProductSection(); 
             }
         } catch (error) {
             console.error('Gagal menghapus kategori:', error);
@@ -987,17 +891,15 @@ async function deleteCategory(id) {
     }
 }
 
-// >> PERBAIKAN FUNGSI LOAD ORDERS (Menambahkan Parameter Filter)
 async function loadOrders(query = '', status = 'Semua Status') {
     try {
         let url = '/admin/api/orders';
         const params = [];
-        if (query) params.push(`search=${encodeURIComponent(query)}`); // Menggunakan 'search' sesuai AdminController
+        if (query) params.push(`search=${encodeURIComponent(query)}`); 
         if (status !== 'Semua Status') params.push(`status=${encodeURIComponent(status)}`);
         if (params.length > 0) url += '?' + params.join('&');
         
         console.log('Fetching orders from:', url);
-        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch(url);
         const orders = await response.json();
         const tbody = document.querySelector('#orders-table-body');
@@ -1037,7 +939,6 @@ async function loadOrders(query = '', status = 'Semua Status') {
             tbody.innerHTML += row;
         });
         
-        // Panggil loadRecentOrders di sini untuk memastikan data dashboard terbarui
         if (document.getElementById('dashboard-section').style.display === 'block') {
              loadRecentOrders();
         }
@@ -1048,7 +949,7 @@ async function loadOrders(query = '', status = 'Semua Status') {
     }
 }
 
-// >> FUNGSI BARU UNTUK FILTER PESANAN
+
 function filterOrders() {
     const query = document.querySelector('#orders-section input[type="search"]').value;
     const status = document.querySelector('#orders-section select.form-select').value;
@@ -1067,7 +968,6 @@ async function saveOrderStatus() {
     const status = document.getElementById('orderStatus').value;
     const orderData = { id: currentOrderId, status: status };
     try {
-        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/orders/update-status', {
             method: 'POST',
             headers: { 
@@ -1087,7 +987,7 @@ async function saveOrderStatus() {
         alert(result.message);
         if (response.ok) {
             closeAllModalsAndCleanUp();
-            loadOrders(); // Refresh order list
+            loadOrders(); 
         }
     } catch (error) {
         console.error('Gagal update status pesanan:', error);
@@ -1103,8 +1003,6 @@ function logout() {
 
 async function viewOrderDetails(orderId) {
     try {
-        // Karena API getOrders sudah mengembalikan detail item, kita panggil ulang
-        // Ini tidak ideal, tapi ini cara termudah untuk berintegrasi tanpa membuat API baru.
         const response = await fetch('/admin/api/orders'); 
         const orders = await response.json();
         const order = orders.find(o => o.id === orderId);
@@ -1169,14 +1067,12 @@ async function viewOrderDetails(orderId) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if there's an activeSection parameter from session
     @if(session('activeSection'))
         showSection('{{ session('activeSection') }}');
     @else
         showSection('dashboard');
     @endif
     
-    // Event Listeners untuk Filter Produk
     const productSearchInput = document.querySelector('#products-section input[type="search"]');
     const productCategorySelect = document.querySelector('#productFilterCategory');
     

@@ -23,44 +23,44 @@
 
     {{-- columns --}}
     <div>
-      <div class="font-bold mb-3 text-lg">COMPANY</div>
+      <div class="font-bold mb-3 text-lg">Perusahaan</div>
       <ul class="space-y-2 text-base text-gray-600">
-        <li><a href="#" class="hover:underline">About</a></li>
-        <li><a href="#" class="hover:underline">Features</a></li>
-        <li><a href="#" class="hover:underline">Works</a></li>
-        <li><a href="#" class="hover:underline">Career</a></li>
+        <li><a href="#" class="hover:underline">Tentang</a></li>
+        <li><a href="#" class="hover:underline">Fitur</a></li>
+        <li><a href="#" class="hover:underline">Karya</a></li>
+        <li><a href="#" class="hover:underline">Karir</a></li>
       </ul>
     </div>
     <div>
-      <div class="font-bold mb-3 text-lg">HELP</div>
+      <div class="font-bold mb-3 text-lg">BANTUAN</div>
       <ul class="space-y-2 text-base text-gray-600">
-        <li><a href="#" class="hover:underline">Customer Support</a></li>
-        <li><a href="#" class="hover:underline">Delivery Details</a></li>
-        <li><a href="#" class="hover:underline">Terms &amp; Conditions</a></li>
-        <li><a href="#" class="hover:underline">Privacy Policy</a></li>
+        <li><a href="#" class="hover:underline">Dukungan Pelanggan</a></li>
+        <li><a href="#" class="hover:underline">Detail Pengiriman</a></li>
+        <li><a href="#" class="hover:underline">Syarat &amp; Ketentuan</a></li>
+        <li><a href="#" class="hover:underline">Kebijakan Privasi</a></li>
       </ul>
     </div>
     <div>
       <div class="font-bold mb-3 text-lg">FAQ</div>
       <ul class="space-y-2 text-base text-gray-600">
-        <li><a href="#" class="hover:underline">Account</a></li>
-        <li><a href="#" class="hover:underline">Manage Deliveries</a></li>
-        <li><a href="#" class="hover:underline">Orders</a></li>
-        <li><a href="#" class="hover:underline">Payments</a></li>
+        <li><a href="#" class="hover:underline">Akun</a></li>
+        <li><a href="#" class="hover:underline">Kelola Pengiriman</a></li>
+        <li><a href="#" class="hover:underline">Pesanan</a></li>
+        <li><a href="#" class="hover:underline">Pembayaran</a></li>
       </ul>
     </div>
     <div>
-      <div class="font-bold mb-3 text-lg">RESOURCES</div>
+      <div class="font-bold mb-3 text-lg">SUMBER DAYA</div>
       <ul class="space-y-2 text-base text-gray-600">
-        <li><a href="#" class="hover:underline">Free eBooks</a></li>
-        <li><a href="#" class="hover:underline">Development Tutorial</a></li>
-        <li><a href="#" class="hover:underline">How to - Blog</a></li>
-        <li><a href="#" class="hover:underline">Youtube Playlist</a></li>
+        <li><a href="#" class="hover:underline">eBook Gratis</a></li>
+        <li><a href="#" class="hover:underline">Tutorial Pengembangan</a></li>
+        <li><a href="#" class="hover:underline">Blog Cara - Cara</a></li>
+        <li><a href="#" class="hover:underline">Playlist Youtube</a></li>
       </ul>
     </div>
   </div>
 
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-10 pt-6 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-    <div>Buyee.co © 2000-2025 All Rights Reserved</div>
+    <div>Buyee.co © 2000-2025 Semua Hak Dilindungi</div>
   </div>
 </footer>
