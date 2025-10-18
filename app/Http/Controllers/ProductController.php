@@ -17,85 +17,67 @@ class ProductController extends Controller
         $categories = Category::all();
         $query = Product::with('category')->where('is_active', true);
         
-        // Check if this is an API request
+        // Cek apakah ini adalah permintaan API atau permintaan Web
         if ($request->expectsJson() || $request->is('api/*')) {
-            // Apply filters for API
-            if ($request->filled('category_id')) {
-                $query->where('category_id', $request->category_id);
-            }
-            
-            if ($request->filled('search')) {
-                $query->where(function($q) use ($request) {
-                    $q->where('name', 'like', '%' . $request->search . '%')
-                      ->orWhere('description', 'like', '%' . $request->search . '%');
-                });
-            }
-            
-            // Apply sorting
-            $sortBy = $request->input('sort_by', 'latest');
-            switch ($sortBy) {
-                case 'price_asc': $query->orderBy('price', 'asc'); break;
-                case 'price_desc': $query->orderBy('price', 'desc'); break;
-                case 'bestseller': $query->orderBy('sales_count', 'desc'); break;
-                default: $query->orderBy('created_at', 'desc'); break;
-            }
-
-            $products = $query->paginate(12);
-            return response()->json($products);
+             // Jika API, panggil metode apiIndex untuk pemrosesan API
+             return $this->apiIndex($request);
         }
         
         // Web request logic
-        // --- LOGIKA UNTUK JUDUL HALAMAN & FILTER KATEGORI ---
-        $pageTitle = 'All Products'; // Judul default
+        $pageTitle = 'Semua Produk'; // Judul default
         
-        if ($request->filled('group') && $request->group !== 'all') {
-            $groupParam = Str::slug($request->group);
+        // >> KOREKSI DITERAPKAN DI SINI <<
+        // Ambil slug dari parameter 'category' (dari homepage) atau 'group' (dari sidebar lama)
+        $filterSlug = $request->query('category') ?? $request->query('group');
 
-            $activeCategory = $categories->first(function ($category) use ($groupParam) {
-                $normalizedOptions = collect([
-                    $category->slug,
-                    str_replace(['-fashion', '-category'], '', $category->slug),
-                    str_replace(['fashion-', 'category-'], '', $category->slug),
-                ])->map(fn ($value) => Str::slug($value))->unique();
-
-                return $normalizedOptions->contains($groupParam);
-            });
+        // --- FILTER KATEGORI BERDASARKAN SLUG ---
+        if ($filterSlug && $filterSlug !== 'all') {
+            // Cari kategori berdasarkan slug yang dikirim
+            $activeCategory = $categories->firstWhere('slug', $filterSlug);
+            
+            // Fallback jika slug tidak ditemukan (menggunakan logika yang sudah ada di kode Anda sebelumnya)
+            if (!$activeCategory) {
+                 $activeCategory = $categories->first(function ($cat) use ($filterSlug) {
+                    $slugs = [Str::slug($cat->name), $cat->slug];
+                    return in_array($filterSlug, $slugs);
+                 });
+            }
 
             if ($activeCategory) {
                 $pageTitle = $activeCategory->name;
                 $query->where('category_id', $activeCategory->id);
-            } else {
-                $possibleSlugs = [
-                    $groupParam,
-                    $groupParam . '-fashion',
-                    $groupParam . '-category',
-                    'fashion-' . $groupParam,
-                    'category-' . $groupParam,
-                ];
+            } 
+        }
+        
+        // --- FILTER HARGA ---
+        if ($request->filled('min_price')) { 
+             $query->where('price', '>=', $request->min_price);
+        }
+        if ($request->filled('max_price')) { 
+             $query->where('price', '<=', $request->max_price);
+        }
+        
+        // Fitur Pencarian & History (dihilangkan karena hanya placeholder di source Anda)
 
-                $query->whereHas('category', function ($q) use ($possibleSlugs) {
-                    $q->whereIn('slug', $possibleSlugs);
-                });
+        // Logika Sorting (Digunakan untuk filter Best Seller, Price, dll)
+        
+        // Ambil parameter 'sort' (dari checkbox Best Seller) dan 'sort_by' (dari dropdown sorting, jika ada)
+        $sortByCheckbox = $request->input('sort');
+        $sortByDropdown = $request->input('sort_by', 'latest');
+        
+        if ($sortByCheckbox === 'bestseller') {
+            // Prioritas: Best Seller (dari checkbox)
+            $query->orderBy('sales_count', 'desc');
+        } else {
+             // Sorting Harga atau Terbaru
+             switch ($sortByDropdown) {
+                case 'price_asc': $query->orderBy('price', 'asc'); break;
+                case 'price_desc': $query->orderBy('price', 'desc'); break;
+                // 'bestseller' di sini diabaikan karena sudah dihandle checkbox
+                default: $query->orderBy('created_at', 'desc'); break; 
             }
         }
-        
-        // Filter Harga
-        if ($request->filled('min_price')) { /* ... */ }
-        if ($request->filled('max_price')) { /* ... */ }
-        
-        // Fitur Pencarian & History
-        if ($request->filled('search')) {
-            // ... logika pencarian & history ...
-        }
-
-        // Logika Sorting
-        $sortBy = $request->input('sort_by', 'latest');
-        switch ($sortBy) {
-            case 'price_asc': $query->orderBy('price', 'asc'); break;
-            case 'price_desc': $query->orderBy('price', 'desc'); break;
-            case 'bestseller': $query->orderBy('sales_count', 'desc'); break;
-            default: $query->orderBy('created_at', 'desc'); break;
-        }
+        // >> END KOREKSI <<
 
         $products = $query->paginate(9)->withQueryString();
 

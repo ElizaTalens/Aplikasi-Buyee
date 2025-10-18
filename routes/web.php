@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 // Frontend Controllers
+
+use Illuminate\Support\Facades\Route; 
+use Illuminate\Http\Request;    
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
@@ -17,6 +21,7 @@ use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
+
 use App\Http\Controllers\Auth\GoogleAuthController;
 
 // Backend (Admin) Controllers
@@ -91,8 +96,10 @@ Route::middleware(['auth', \App\Http\Middleware\RedirectIfAdmin::class])->group(
 // Temporary test routes for debugging
 Route::get('/test-auth', function () {
     return response()->json([
-        'authenticated' => auth()->check(),
-        'user' => auth()->user() ? auth()->user()->only(['id', 'name', 'email']) : null,
+        'authenticated' => Auth::check(),
+       'user' => Auth::user()
+            ? collect(Auth::user())->only(['id', 'name', 'email'])->all()
+            : null,
         'session_id' => session()->getId(),
         'csrf_token' => csrf_token()
     ]);
@@ -101,7 +108,7 @@ Route::get('/test-auth', function () {
 Route::get('/auto-login', function () {
     $user = \App\Models\User::where('email', 'test@example.com')->first();
     if ($user) {
-        auth()->login($user);
+        Auth::login($user);
         return redirect('/wishlist')->with('success', 'Berhasil login sebagai test user');
     }
     return redirect('/login')->with('error', 'Test user tidak ditemukan');

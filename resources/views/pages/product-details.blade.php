@@ -242,7 +242,11 @@
             }
           })
         });
-
+        if (response.status === 401) {
+          // Arahkan pengguna ke halaman login jika belum login
+          window.location.href = "{{ route('login') }}"; 
+          return; 
+        }
         const data = await response.json();
 
         if (response.ok) {
@@ -283,6 +287,11 @@
             product_id: productId
           })
         });
+        if (response.status === 401) {
+            // Tambahkan parameter 'intended' ke URL login
+            window.location.href = "{{ route('login') }}?redirect_to=" + encodeURIComponent(window.location.href); 
+            return;
+        }
         const data = await response.json();
         if (response.ok) {
           toast(data.message, 'ok');

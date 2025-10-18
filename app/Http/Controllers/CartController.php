@@ -8,7 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB; // <-- Tambahkan ini untuk Transaksi Database
+use Illuminate\Support\Facades\DB; 
+use Illuminate\Validation\ValidationException; 
 
 class CartController extends Controller
 {
@@ -20,7 +21,7 @@ class CartController extends Controller
     public function index(): View|JsonResponse
     {
         $cartItems = CartItem::with('product')
-            ->where('user_id', Auth::id())
+            ->where('user_id', Auth::id()) 
             ->get();
 
         $total = $cartItems->sum(function($item) {
@@ -75,7 +76,7 @@ class CartController extends Controller
                     throw new \Exception('Stok tidak mencukupi untuk menambahkan kuantitas.');
                 }
                 $cartItem->quantity = $newQuantity;
-                $cartItem->price = $product->final_price; // Selalu update harga terbaru
+                $cartItem->price = $product->final_price ?? $product->price; // Selalu update harga terbaru
                 $cartItem->product_options = $validated['product_options'] ?? [];
                 $cartItem->save();
             } else {
@@ -84,7 +85,7 @@ class CartController extends Controller
                     'user_id' => Auth::id(),
                     'product_id' => $validated['product_id'],
                     'quantity' => $validated['quantity'],
-                    'price' => $product->final_price,
+                    'price' => $product->final_price ?? $product->price,
                     'product_options' => $validated['product_options'] ?? []
                 ]);
             }
@@ -104,50 +105,60 @@ class CartController extends Controller
     }
 
     /**
-     * Memperbarui kuantitas item di keranjang.
+     * Memperbarui kuantitas item di keranjang (Menerima POST dengan _method=PUT).
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $id (CartItem ID)
+     * @param   \Illuminate\Http\Request  $request
+     * @param   string  $id (CartItem ID)
      * @return \Illuminate\Http\JsonResponse
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        $validated = $request->validate([
-            'quantity' => 'required|integer|min:1'
-        ]);
-
+        // Catatan: Laravel akan membaca input form-encoded dari POST/_method=PUT
+        
         try {
+            // Validasi menggunakan $request->input() karena data terkirim sebagai URL-encoded form data
+            $validated = $request->validate([
+                'quantity' => 'required|integer|min:1'
+            ]);
+            
             DB::beginTransaction();
 
-            $cartItem = CartItem::where('user_id', Auth::id())->findOrFail($id);
+            // KOREKSI UTAMA: Menggunakan relasi untuk mengambil Product
+            $cartItem = CartItem::where('user_id', Auth::id())->with('product')->findOrFail($id);
             $product = $cartItem->product;
-
-            if ($product->stock_quantity < $validated['quantity']) {
-                throw new \Exception('Stok produk tidak mencukupi.');
+            
+            // Validasi Stok
+            if (!$product || $product->stock_quantity < $validated['quantity']) {
+                 throw ValidationException::withMessages(['quantity' => ['Stok produk tidak mencukupi.']]);
             }
 
             $cartItem->update([
                 'quantity' => $validated['quantity'],
-                'price' => $product->final_price // Update harga jika berubah
+                'price' => $product->final_price ?? $product->price 
             ]);
 
             DB::commit();
 
             return response()->json([
                 'message' => 'Kuantitas berhasil diperbarui.',
-                'cart_item' => $cartItem->load('product'),
-                'cart_count' => $this->getCartCount() // <-- Mengembalikan jumlah terbaru
+                'new_subtotal' => $cartItem->quantity * $cartItem->price,
+                'cart_count' => $this->getCartCount() 
             ]);
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            // Kembalikan response 422 dengan pesan error validasi
+            return response()->json(['message' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => $e->getMessage()], 422);
+            // Jika request body kosong, ini bisa jadi error 500 karena $request->validate gagal
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
 
     /**
      * Menghapus item dari keranjang.
      *
-     * @param  string  $id (CartItem ID)
+     * @param   string  $id (CartItem ID)
      * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(string $id): JsonResponse
@@ -157,9 +168,35 @@ class CartController extends Controller
 
         return response()->json([
             'message' => 'Item berhasil dihapus dari keranjang.',
-            'cart_count' => $this->getCartCount() // <-- Mengembalikan jumlah terbaru
+            'cart_count' => $this->getCartCount() 
         ]);
     }
+
+    /**
+     * Menghapus banyak item dari keranjang (Untuk Selective Checkout).
+     *
+     * @param   \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteMultiple(Request $request): JsonResponse
+    {
+        // Catatan: Menerima JSON dari POST/_method=DELETE
+        
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:cart_items,id',
+        ]);
+        
+        $count = CartItem::where('user_id', Auth::id())
+                 ->whereIn('id', $validated['ids'])
+                 ->delete();
+
+        return response()->json([
+            'message' => "{$count} item berhasil dihapus dari keranjang.",
+            'cart_count' => $this->getCartCount() 
+        ]);
+    }
+
 
     /**
      * Menghapus semua item dari keranjang.
@@ -172,7 +209,7 @@ class CartController extends Controller
 
         return response()->json([
             'message' => 'Semua item berhasil dihapus dari keranjang.',
-            'cart_count' => 0 // <-- Langsung kembalikan 0
+            'cart_count' => 0 
         ]);
     }
 

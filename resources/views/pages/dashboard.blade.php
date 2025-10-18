@@ -462,7 +462,8 @@ const getStatusBadge = (status) => {
         'diproses': 'bg-warning',
         'dikirim': 'bg-info',
         'selesai': 'bg-success',
-        'batal': 'bg-danger'
+        'batal': 'bg-danger',
+        'pending': 'bg-warning' // Tambahkan pending
     };
     return `<span class="badge status-badge ${statuses[status] || 'bg-secondary'}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
 }
@@ -474,6 +475,10 @@ function closeAllModalsAndCleanUp() {
         if (modalInstance) {
             modalInstance.hide();
         }
+    });
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => {
+        backdrop.remove();
     });
     document.body.classList.remove('modal-open');
     document.body.style.overflow = '';
@@ -497,16 +502,19 @@ function showSection(section) {
         loadRecentOrders();
     }
     if (section === 'products') {
-        loadProducts();
+        loadProducts(); // Panggil tanpa filter awal
         loadCategoriesForProductSection();
     }
-    if (section === 'orders') loadOrders();
+    if (section === 'orders') {
+        loadOrders(); // Panggil tanpa filter awal
+    }
     if (section === 'categories') loadCategories();
 }
 
 async function loadDashboardStats() {
     try {
         console.log('Loading dashboard stats...');
+        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/stats', {
             credentials: 'same-origin',
             headers: {
@@ -537,13 +545,14 @@ async function loadDashboardStats() {
         console.log('Dashboard stats updated successfully');
     } catch (error) {
         console.error('Gagal memuat statistik:', error);
-        alert('Gagal memuat statistik dashboard: ' + error.message);
+        // alert('Gagal memuat statistik dashboard: ' + error.message);
     }
 }
 
 async function loadRecentOrders() {
     try {
         console.log('Loading recent orders for dashboard...');
+        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/orders', {
             credentials: 'same-origin',
             headers: {
@@ -569,11 +578,18 @@ async function loadRecentOrders() {
         
         // Show only the 5 most recent orders
         const recentOrders = orders.slice(0, 5);
+        if (recentOrders.length === 0) {
+            dashboardTbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Tidak ada pesanan terbaru.</td></tr>';
+            return;
+        }
+
         recentOrders.forEach(order => {
+            // Menggunakan properti customer_name dari order object
+            const customerName = order.customer_name || (order.user ? order.user.name : 'N/A'); 
             const row = `
                 <tr>
                     <td>#${String(order.id).padStart(3, '0')}</td>
-                    <td>${order.user ? order.user.name : 'N/A'}</td>
+                    <td>${customerName}</td>
                     <td>${formatCurrency(order.total || 0)}</td>
                     <td>${getStatusBadge(order.status || 'pending')}</td>
                     <td>${formatDate(order.created_at)}</td>
@@ -593,24 +609,37 @@ async function loadRecentOrders() {
 
 async function loadCategoriesForProductSection() {
     try {
+        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/categories');
         const categories = await response.json();
         const select = document.querySelector('#productFilterCategory');
         if (!select) return;
         select.innerHTML = '<option value="">Semua Kategori</option>';
         categories.forEach(c => select.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+        
+        // Juga update dropdown di Product Modal
+        const modalSelect = document.getElementById('productCategory');
+        if (modalSelect) {
+            modalSelect.innerHTML = '<option value="">Pilih Kategori</option>';
+            categories.forEach(c => modalSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+        }
+        
     } catch (error) {
         console.error('Gagal memuat kategori untuk filter:', error);
     }
 }
 
+// >> PERBAIKAN FUNGSI LOAD PRODUCTS (Menambahkan Parameter Filter)
 async function loadProducts(query = '', categoryId = '') {
     try {
+        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         let url = '/admin/api/products';
         const params = [];
         if (query) params.push(`query=${encodeURIComponent(query)}`);
         if (categoryId) params.push(`category_id=${categoryId}`);
         if (params.length > 0) url += '?' + params.join('&');
+        
+        console.log('Fetching products from:', url);
         const response = await fetch(url);
         const products = await response.json();
         const tbody = document.querySelector('#products-table-body');
@@ -620,9 +649,22 @@ async function loadProducts(query = '', categoryId = '') {
             return;
         }
         products.forEach(p => {
-            const statusText = p.stock_quantity > 0 && p.is_active ? 'Aktif' : 'Habis/Nonaktif';
-            const statusBadgeClass = p.stock_quantity > 0 && p.is_active ? 'bg-success' : 'bg-danger';
-            const imageUrl = (p.images && p.images.length > 0) ? `/storage/${p.images[0]}` : 'https://via.placeholder.com/50x50?text=No+Img';
+            // Perhatikan bahwa field stock di AdminController.php lama adalah stock_quantity
+            const stockValue = p.stock_quantity !== undefined ? p.stock_quantity : (p.stock || 0);
+            const statusText = stockValue > 0 && p.is_active ? 'Aktif' : 'Habis/Nonaktif';
+            const statusBadgeClass = stockValue > 0 && p.is_active ? 'bg-success' : 'bg-danger';
+            
+            // Perbaikan untuk image
+            let imageUrl = 'https://via.placeholder.com/50x50?text=No+Img';
+            if (p.images && p.images.length > 0) {
+                // Di AdminController.php yang lama, field-nya adalah 'images' (JSON array)
+                // Kita asumsikan itu adalah array of paths, dan kita ambil yang pertama.
+                imageUrl = `/storage/${p.images[0]}`; 
+            } else if (p.image) {
+                 // Untuk kode yang menggunakan kolom 'image' (seperti di AdminController.php yang lama yang direvisi)
+                 imageUrl = `/${p.image}`; 
+            }
+            
             const imageCell = `<td><img src="${imageUrl}" alt="${p.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" onerror="this.onerror=null;this.src='https://via.placeholder.com/50x50?text=No+Img';"></td>`;
             tbody.innerHTML += `
                 <tr>
@@ -631,7 +673,7 @@ async function loadProducts(query = '', categoryId = '') {
                     <td>${p.name}</td>
                     <td>${p.category ? p.category.name : 'N/A'}</td>
                     <td>${formatCurrency(p.price)}</td>
-                    <td>${p.stock_quantity}</td>
+                    <td>${stockValue}</td>
                     <td><span class="badge ${statusBadgeClass}">${statusText}</span></td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${p.id})"><i class="fas fa-edit"></i></button>
@@ -644,9 +686,10 @@ async function loadProducts(query = '', categoryId = '') {
     }
 }
 
+// >> FUNGSI BARU UNTUK FILTER PRODUK
 function filterProducts() {
     const query = document.querySelector('#products-section input[type="search"]').value;
-    const categoryId = document.querySelector('#products-section .form-select').value;
+    const categoryId = document.querySelector('#productFilterCategory').value;
     loadProducts(query, categoryId);
 }
 
@@ -655,21 +698,32 @@ async function editProduct(id) {
     document.getElementById('productModalTitle').textContent = 'Edit Produk';
     document.getElementById('productForm').reset();
     document.getElementById('image-preview').innerHTML = '';
-    await loadCategoriesForProductModal();
+    await loadCategoriesForProductSection(); // Panggil fungsi yang sudah diupdate
     try {
+        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch(`/admin/api/products/${id}`);
         const data = await response.json();
         document.getElementById('productName').value = data.name;
         document.getElementById('productCategory').value = data.category_id;
         document.getElementById('productPrice').value = data.price;
-        document.getElementById('productStock').value = data.stock_quantity;
+        // Gunakan properti yang benar dari Model (stock_quantity) atau fallback ke 'stock'
+        document.getElementById('productStock').value = data.stock_quantity !== undefined ? data.stock_quantity : (data.stock || 0); 
         document.getElementById('productStatus').value = data.is_active;
         document.getElementById('productDescription').value = data.description || '';
         const previewDiv = document.getElementById('image-preview');
+        
+        // Logika Image untuk Edit
+        let imageUrl = null;
         if (data.images && data.images.length > 0) {
-            const imageUrl = `/storage/${data.images[0]}`;
+            imageUrl = `/storage/${data.images[0]}`; 
+        } else if (data.image) { 
+             imageUrl = `/${data.image}`;
+        }
+        
+        if (imageUrl) {
             previewDiv.innerHTML = `<img src="${imageUrl}" style="max-width: 150px; border-radius: 8px; margin-top: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" alt="Foto Produk Saat Ini">`;
         }
+        
     } catch (error) {
         console.error('Gagal mengambil data produk:', error);
     }
@@ -682,49 +736,12 @@ async function openProductModal() {
     document.getElementById('productModalTitle').textContent = 'Tambah Produk';
     document.getElementById('productForm').reset();
     document.getElementById('image-preview').innerHTML = '';
-    await loadCategoriesForProductModal();
+    await loadCategoriesForProductSection(); // Panggil fungsi yang sudah diupdate
     const productModal = new bootstrap.Modal(document.getElementById('productModal'));
     productModal.show();
 }
 
-async function loadCategoriesForProductModal() {
-    try {
-        console.log('Loading categories for product modal...');
-        const response = await fetch('/admin/api/categories', {
-            headers: {
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        });
-        
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Response error:', errorText);
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-        
-        const categories = await response.json();
-        console.log('Categories loaded:', categories);
-        
-        const select = document.getElementById('productCategory');
-        if (!select) {
-            console.error('Product category select element not found');
-            return;
-        }
-        
-        select.innerHTML = '<option value="">Pilih Kategori</option>';
-        categories.forEach(c => {
-            select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-        });
-        
-        console.log('Categories dropdown populated successfully');
-    } catch (error) {
-        console.error('Gagal memuat kategori:', error);
-        alert('Gagal memuat kategori: ' + error.message);
-    }
-}
+// Fungsi loadCategoriesForProductModal DIHAPUS, digantikan oleh loadCategoriesForProductSection
 
 async function saveProduct() {
     console.log('Saving product...');
@@ -744,11 +761,13 @@ async function saveProduct() {
         console.log(key, value);
     }
     
+    // Hapus image_file dari formData jika edit dan tidak ada file baru diupload
     if (currentProductId && !document.getElementById('productImageFile').files.length) {
         formData.delete('image_file');
     }
     
     try {
+        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/products/save', {
             method: 'POST',
             body: formData,
@@ -763,7 +782,27 @@ async function saveProduct() {
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Save response error:', errorText);
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
+            
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+                const errorJson = JSON.parse(errorText);
+                if (errorJson.message) {
+                    errorMessage += `: ${errorJson.message}`;
+                } else if (errorJson.errors) {
+                    errorMessage += ': Validasi gagal, cek konsol.';
+                    // Tampilkan error validasi Laravel jika ada
+                    const errors = errorJson.errors;
+                    let validationMessage = '';
+                    for (const field in errors) {
+                        validationMessage += errors[field].join('\n') + '\n';
+                    }
+                    alert('Gagal menyimpan produk. Validasi:\n' + validationMessage.trim());
+                    return;
+                }
+            } catch (e) {
+                // Jika bukan JSON
+            }
+            throw new Error(errorMessage);
         }
         
         const result = await response.json();
@@ -783,6 +822,7 @@ async function saveProduct() {
 async function deleteProduct(id) {
     if (confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
         try {
+            // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
             const response = await fetch(`/admin/api/products/delete/${id}`, {
                 method: 'DELETE',
                 headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
@@ -800,10 +840,15 @@ async function deleteProduct(id) {
 
 async function loadCategories() {
     try {
+        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/categories');
         const categories = await response.json();
         const tbody = document.querySelector('#categories-table-body');
         tbody.innerHTML = '';
+        if (categories.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Tidak ada kategori.</td></tr>`;
+            return;
+        }
         categories.forEach(c => {
             tbody.innerHTML += `
                 <tr>
@@ -835,6 +880,7 @@ async function editCategory(id) {
     currentCategoryId = id;
     document.getElementById('categoryModalTitle').textContent = 'Edit Kategori';
     try {
+        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch(`/admin/api/categories/${id}`);
         const data = await response.json();
         document.getElementById('categoryName').value = data.name;
@@ -857,58 +903,121 @@ async function saveCategory() {
         name: document.getElementById('categoryName').value,
     };
     try {
+        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/categories/save', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json', 
+                'Accept': 'application/json', 
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') 
             },
             body: JSON.stringify(categoryData)
         });
+        
+        // Cek jika response bukan OK (misal: 400, 422, 500)
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Save category response error:', errorText);
+            
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+                const errorJson = JSON.parse(errorText);
+                if (errorJson.message) {
+                    errorMessage += `: ${errorJson.message}`;
+                } else if (errorJson.errors) {
+                    errorMessage += ': Validasi gagal, cek konsol.';
+                    // Tampilkan error validasi Laravel jika ada
+                    const errors = errorJson.errors;
+                    let validationMessage = '';
+                    for (const field in errors) {
+                        validationMessage += errors[field].join('\n') + '\n';
+                    }
+                    alert('Gagal menyimpan kategori. Validasi:\n' + validationMessage.trim());
+                    return;
+                }
+            } catch (e) {
+                // Jika bukan JSON, tampilkan saja status HTTP
+            }
+            throw new Error(errorMessage); 
+        }
+        
+        // Respons yang sukses
         const result = await response.json();
         alert(result.message);
+        
         if (response.ok) {
             closeAllModalsAndCleanUp();
             loadCategories();
+            loadCategoriesForProductSection(); // Refresh category list in product section
         }
     } catch (error) {
         console.error('Gagal menyimpan kategori:', error);
+        alert('Gagal menyimpan kategori: ' + error.message);
     }
 }
 
 async function deleteCategory(id) {
-    if (confirm('Yakin ingin menghapus kategori ini?')) {
+    if (confirm('Yakin ingin menghapus kategori ini? Semua produk di dalamnya mungkin tidak akan tampil. Lanjutkan?')) {
         try {
+            // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
             const response = await fetch(`/admin/api/categories/delete/${id}`, {
                 method: 'DELETE',
                 headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
             });
+            
+            if (!response.ok) {
+                const errorJson = await response.json();
+                if (response.status === 409) { // Konflik, kategori masih punya produk
+                    alert(errorJson.message);
+                    return;
+                }
+                throw new Error(errorJson.message || `HTTP ${response.status}`);
+            }
+            
             const result = await response.json();
             alert(result.message);
             if (response.ok) {
                 loadCategories();
+                loadCategoriesForProductSection(); // Refresh category list in product section
             }
         } catch (error) {
             console.error('Gagal menghapus kategori:', error);
+            alert('Gagal menghapus kategori: ' + error.message);
         }
     }
 }
 
-async function loadOrders() {
+// >> PERBAIKAN FUNGSI LOAD ORDERS (Menambahkan Parameter Filter)
+async function loadOrders(query = '', status = 'Semua Status') {
     try {
-        const response = await fetch('/admin/api/orders');
+        let url = '/admin/api/orders';
+        const params = [];
+        if (query) params.push(`search=${encodeURIComponent(query)}`); // Menggunakan 'search' sesuai AdminController
+        if (status !== 'Semua Status') params.push(`status=${encodeURIComponent(status)}`);
+        if (params.length > 0) url += '?' + params.join('&');
+        
+        console.log('Fetching orders from:', url);
+        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
+        const response = await fetch(url);
         const orders = await response.json();
         const tbody = document.querySelector('#orders-table-body');
-        const dashboardTbody = document.querySelector('#dashboard-orders-table-body');
         tbody.innerHTML = '';
-        dashboardTbody.innerHTML = '';
+        
+        if (orders.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">Tidak ada pesanan ditemukan.</td></tr>`;
+            return;
+        }
+        
         orders.forEach(o => {
+            const customerName = o.customer_name || (o.user ? o.user.name : 'N/A');
+            const customerEmail = o.customer_email || (o.user ? o.user.email : 'N/A');
+
             const row = `
                 <tr>
                     <td>#${String(o.id).padStart(3, '0')}</td>
                     <td>
-                        <strong>${o.customer_name || 'N/A'}</strong><br>
-                        <small class="text-muted">${o.customer_email || ''}</small><br>
+                        <strong>${customerName}</strong><br>
+                        <small class="text-muted">${customerEmail}</small><br>
                         <small class="text-muted">${o.customer_phone || ''}</small>
                     </td>
                     <td>${formatCurrency(o.total)}</td>
@@ -917,30 +1026,35 @@ async function loadOrders() {
                         <span class="badge bg-info">${o.payment_method || 'N/A'}</span>
                     </td>
                     <td>
-                        <small>${o.address_text}</small>
+                        <small>${o.address_text || 'N/A'}</small>
                     </td>
                     <td>${formatDate(o.created_at)}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-success btn-custom" onclick="updateOrderStatus(${o.id}, '${o.status}')"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-sm btn-outline-info btn-custom" onclick="viewOrderDetails(${o.id})"><i class="fas fa-eye"></i></button>
+                        <button class="btn btn-sm btn-outline-info btn-custom" data-bs-toggle="modal" data-bs-target="#orderDetailsModal" onclick="viewOrderDetails(${o.id})"><i class="fas fa-eye"></i></button>
                     </td>
                 </tr>`;
             tbody.innerHTML += row;
         });
-        orders.slice(0, 3).forEach(o => {
-            dashboardTbody.innerHTML += `
-                <tr>
-                    <td>#${String(o.id).padStart(3, '0')}</td>
-                    <td>${o.user ? o.user.name : 'N/A'}</td>
-                    <td>${formatCurrency(o.total)}</td>
-                    <td>${getStatusBadge(o.status)}</td>
-                    <td>${formatDate(o.created_at)}</td>
-                </tr>`;
-        });
+        
+        // Panggil loadRecentOrders di sini untuk memastikan data dashboard terbarui
+        if (document.getElementById('dashboard-section').style.display === 'block') {
+             loadRecentOrders();
+        }
+        
     } catch (error) {
         console.error('Gagal memuat pesanan:', error);
+        document.querySelector('#orders-table-body').innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Error memuat data pesanan: ${error.message}</td></tr>`;
     }
 }
+
+// >> FUNGSI BARU UNTUK FILTER PESANAN
+function filterOrders() {
+    const query = document.querySelector('#orders-section input[type="search"]').value;
+    const status = document.querySelector('#orders-section select.form-select').value;
+    loadOrders(query, status);
+}
+
 
 function updateOrderStatus(id, currentStatus) {
     currentOrderId = id;
@@ -953,22 +1067,31 @@ async function saveOrderStatus() {
     const status = document.getElementById('orderStatus').value;
     const orderData = { id: currentOrderId, status: status };
     try {
+        // >> KOREKSI URL API: Menggunakan URL yang benar dari AdminController.php
         const response = await fetch('/admin/api/orders/update-status', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json', 
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
             },
             body: JSON.stringify(orderData)
         });
+        
+        if (!response.ok) {
+            const errorJson = await response.json();
+            throw new Error(errorJson.message || `HTTP ${response.status}`);
+        }
+        
         const result = await response.json();
         alert(result.message);
         if (response.ok) {
             closeAllModalsAndCleanUp();
-            loadOrders();
+            loadOrders(); // Refresh order list
         }
     } catch (error) {
         console.error('Gagal update status pesanan:', error);
+        alert('Gagal update status pesanan: ' + error.message);
     }
 }
 
@@ -980,7 +1103,9 @@ function logout() {
 
 async function viewOrderDetails(orderId) {
     try {
-        const response = await fetch('/admin/api/orders');
+        // Karena API getOrders sudah mengembalikan detail item, kita panggil ulang
+        // Ini tidak ideal, tapi ini cara termudah untuk berintegrasi tanpa membuat API baru.
+        const response = await fetch('/admin/api/orders'); 
         const orders = await response.json();
         const order = orders.find(o => o.id === orderId);
         
@@ -1002,8 +1127,8 @@ async function viewOrderDetails(orderId) {
                 </div>
                 <div class="col-md-6">
                     <h6>Informasi Pelanggan</h6>
-                    <p><strong>Nama:</strong> ${order.customer_name || 'N/A'}</p>
-                    <p><strong>Email:</strong> ${order.customer_email || 'N/A'}</p>
+                    <p><strong>Nama:</strong> ${order.customer_name || (order.user ? order.user.name : 'N/A')}</p>
+                    <p><strong>Email:</strong> ${order.customer_email || (order.user ? order.user.email : 'N/A')}</p>
                     <p><strong>Telepon:</strong> ${order.customer_phone || 'N/A'}</p>
                     <p><strong>Alamat:</strong> ${order.address_text || 'N/A'}</p>
                 </div>
@@ -1021,7 +1146,7 @@ async function viewOrderDetails(orderId) {
                         </tr>
                     </thead>
                     <tbody>
-                        ${order.items.map(item => `
+                        ${(order.items || []).map(item => `
                             <tr>
                                 <td>${item.product_name}</td>
                                 <td>${item.qty}</td>
@@ -1051,19 +1176,30 @@ document.addEventListener('DOMContentLoaded', function() {
         showSection('dashboard');
     @endif
     
-    const searchInput = document.querySelector('#products-section input[type="search"]');
-    const categorySelect = document.querySelector('#productFilterCategory');
+    // Event Listeners untuk Filter Produk
+    const productSearchInput = document.querySelector('#products-section input[type="search"]');
+    const productCategorySelect = document.querySelector('#productFilterCategory');
     
-    if (searchInput) {
-        searchInput.addEventListener('input', filterProducts);
+    if (productSearchInput) {
+        productSearchInput.addEventListener('input', filterProducts);
     }
-    if (categorySelect) {
-        categorySelect.addEventListener('change', filterProducts);
+    if (productCategorySelect) {
+        productCategorySelect.addEventListener('change', filterProducts);
+    }
+    
+    // Event Listeners untuk Filter Pesanan
+    const orderSearchInput = document.querySelector('#orders-section input[type="search"]');
+    const orderStatusSelect = document.querySelector('#orders-section .form-select');
+
+    if (orderSearchInput) {
+        orderSearchInput.addEventListener('input', filterOrders);
+    }
+    if (orderStatusSelect) {
+        orderStatusSelect.addEventListener('change', filterOrders);
     }
 });
 </script>
 
-<!-- Order Details Modal -->
 <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -1072,8 +1208,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="orderDetailsContent">
-                <!-- Order details will be loaded here -->
-            </div>
+                </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>

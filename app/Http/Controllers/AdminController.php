@@ -9,7 +9,8 @@ use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage; // Tambahkan ini untuk file management
+use Illuminate\Support\Facades\Storage; 
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
@@ -20,7 +21,8 @@ class AdminController extends Controller
     {
         return response()->json([
             'total_products' => Product::count(),
-            'new_orders'     => Order::whereIn('status', ['pending', 'diproses'])->count(),
+            // Mengubah 'pending' dan 'diproses' sesuai yang disarankan oleh AdminController lama
+            'new_orders'     => Order::whereIn('status', ['pending', 'diproses'])->count(), 
             'total_users'    => User::count(),
             'total_sales'    => Order::where('status', 'selesai')->sum('total'),
         ]);
@@ -31,6 +33,7 @@ class AdminController extends Controller
      */
     public function getProducts(Request $request)
     {
+        // Pastikan relasi 'category' dimuat
         $query = Product::with('category')->latest();
 
         if ($request->filled('query')) {
@@ -40,6 +43,8 @@ class AdminController extends Controller
             $query->where('category_id', $request->input('category_id'));
         }
 
+        // PERHATIAN: Perlu memastikan properti yang dikembalikan cocok
+        // dengan apa yang diharapkan di JS (stock_quantity vs stock, images vs image)
         return response()->json($query->get());
     }
 
@@ -76,30 +81,41 @@ class AdminController extends Controller
             $product->name = $validated['name'];
             $product->category_id = $validated['category_id'];
             $product->price = $validated['price'];
-            $product->stock_quantity = $validated['stock']; // Map 'stock' to 'stock_quantity'
+            // Menggunakan stock_quantity untuk kompatibilitas DB yang lebih baik
+            $product->stock_quantity = $validated['stock']; 
             $product->description = $validated['description'];
             $product->is_active = $validated['is_active'];
             
             // Generate SKU if it's a new product
             if (!$product->exists && empty($product->sku)) {
-                $product->sku = 'SKU-' . strtoupper(uniqid());
+                $product->sku = 'SKU-' . strtoupper(Str::random(6));
             }
     
             if ($request->hasFile('image_file')) {
-            // Hapus gambar lama jika ada
-            $currentImages = $product->images ?? [];
-            if (!empty($currentImages)) {
-                foreach ($currentImages as $imagePath) {
-                    if (Storage::disk('public')->exists($imagePath)) {
-                        Storage::disk('public')->delete($imagePath);
+                // Hapus gambar lama jika ada
+                $currentImages = $product->images ?? [];
+                // Asumsi $product->images adalah JSON array of paths
+                if (!empty($currentImages)) {
+                    $images = is_string($currentImages) ? json_decode($currentImages, true) : $currentImages;
+                    if (is_array($images)) {
+                        foreach ($images as $imagePath) {
+                            // Path yang disimpan di DB adalah 'products/namafile.jpg'
+                            if (Storage::disk('public')->exists($imagePath)) {
+                                Storage::disk('public')->delete($imagePath);
+                            }
+                        }
                     }
                 }
-            }
 
-            // Simpan gambar baru
-            $path = $request->file('image_file')->store('products', 'public');
-            $product->images = [$path]; // Store as array since it's JSON column
-        }
+                // Simpan gambar baru
+                $path = $request->file('image_file')->store('products', 'public');
+                // Simpan sebagai array JSON untuk kolom 'images'
+                $product->images = [$path]; 
+            } else if ($product->exists && !$request->hasFile('image_file')) {
+                 // JANGAN HAPUS data gambar jika update tanpa upload file baru
+                 // Pastikan 'images' tidak ditimpa jika field tidak di-fill
+                 // Ini sudah ditangani oleh tidak adanya set $product->images di luar blok if
+            }
     
             $product->save();
             DB::commit();
@@ -120,7 +136,6 @@ class AdminController extends Controller
         $product = Product::findOrFail($id);
 
         if ($product->images && !empty($product->images)) {
-            // Decode JSON string to array if needed
             $images = is_string($product->images) ? json_decode($product->images, true) : $product->images;
             
             if (is_array($images)) {
@@ -163,10 +178,19 @@ class AdminController extends Controller
             'name' => 'required|string|max:255|unique:categories,name,' . $request->input('id'),
         ]);
         
-        Category::updateOrCreate(['id' => $request->input('id')], ['name' => $validated['name']]);
-        
-        $message = $request->input('id') ? 'Kategori berhasil diupdate!' : 'Kategori berhasil ditambahkan!';
-        return response()->json(['message' => $message]);
+        $data = ['name' => $validated['name']];
+        // Tambahkan slug karena ini praktik yang baik
+        $data['slug'] = Str::slug($validated['name']); 
+
+        try {
+            Category::updateOrCreate(['id' => $request->input('id')], $data);
+            
+            $message = $request->input('id') ? 'Kategori berhasil diupdate!' : 'Kategori berhasil ditambahkan!';
+            return response()->json(['message' => $message]);
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Terjadi kesalahan saat menyimpan kategori: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -185,14 +209,48 @@ class AdminController extends Controller
     }
 
     /**
-     * Mengambil daftar pesanan.
+     * Mengambil daftar pesanan dengan filter Pencarian dan Status.
      */
-    public function getOrders()
+    public function getOrders(Request $request)
     {
-        $orders = Order::with(['user', 'orderItems.product'])
-            ->latest()
-            ->get()
+        $query = Order::with(['user', 'orderItems.product'])
+            ->latest();
+
+        // FILTER PENCARIAN (Berdasarkan Pelanggan, Email)
+        if ($request->filled('search')) {
+            $searchTerm = '%' . $request->input('search') . '%';
+            $query->where(function($q) use ($searchTerm) {
+                // Cari berdasarkan Nama Pelanggan (customer_name)
+                $q->where('customer_name', 'like', $searchTerm)
+                  // Cari berdasarkan Email (customer_email)
+                  ->orWhere('customer_email', 'like', $searchTerm) 
+                  // Cari di tabel user jika ada relasi
+                  ->orWhereHas('user', function($userQuery) use ($searchTerm) {
+                      $userQuery->where('name', 'like', $searchTerm)
+                                ->orWhere('email', 'like', $searchTerm);
+                  });
+            });
+        }
+
+        // FILTER STATUS
+        if ($request->filled('status') && $request->input('status') !== 'Semua Status') {
+            // Perhatikan status yang disimpan di DB: 'Diproses' vs 'diproses'
+            // Kita asumsikan status di DB adalah lowercase: 'diproses', 'dikirim', dll.
+            $query->where('status', strtolower($request->input('status')));
+        }
+
+        $orders = $query->get()
             ->map(function($order) {
+                // Menghindari error jika orderItems atau product tidak ada
+                $items = $order->orderItems ? $order->orderItems->map(function($item) {
+                    return [
+                        'product_name' => $item->product->name ?? 'Produk Dihapus',
+                        'qty' => $item->qty,
+                        'price' => $item->price,
+                        'subtotal' => $item->subtotal
+                    ];
+                }) : collect();
+                
                 return [
                     'id' => $order->id,
                     'customer_name' => $order->customer_name,
@@ -206,20 +264,13 @@ class AdminController extends Controller
                     'address_text' => $order->address_text,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
-                    'items_count' => $order->orderItems->count(),
-                    'items' => $order->orderItems->map(function($item) {
-                        return [
-                            'product_name' => $item->product->name,
-                            'qty' => $item->qty,
-                            'price' => $item->price,
-                            'subtotal' => $item->subtotal
-                        ];
-                    })
+                    'items_count' => $items->count(),
+                    'items' => $items
                 ];
             });
         return response()->json($orders);
     }
-
+    
     /**
      * Memperbarui status pesanan.
      */
@@ -227,22 +278,25 @@ class AdminController extends Controller
     {
         $request->validate([
             'id' => 'required|exists:orders,id',
-            'status' => 'required|in:pending,diproses,dikirim,selesai,batal',
+            // Menambahkan 'pending' karena digunakan di JS untuk default/dashboard
+            'status' => 'required|in:pending,diproses,dikirim,selesai,batal', 
         ]);
 
         $order = Order::findOrFail($request->input('id'));
         $newStatus = $request->input('status');
         
-        // Validasi transisi status yang logis
+        // Validasi transisi status yang logis (seperti di kode lama)
         $validTransitions = [
             'pending' => ['diproses', 'batal'],
             'diproses' => ['dikirim', 'batal'],
             'dikirim' => ['selesai'],
-            'selesai' => [], // Status final, tidak bisa diubah
-            'batal' => [] // Status final, tidak bisa diubah
+            'selesai' => [], 
+            'batal' => [] 
         ];
         
-        if (!in_array($newStatus, $validTransitions[$order->status] ?? [])) {
+        // Allow re-setting to the current status to bypass the transition check if needed, 
+        // but for strict logic, the original check is better.
+        if ($newStatus !== $order->status && !in_array($newStatus, $validTransitions[$order->status] ?? [])) {
             return response()->json([
                 'message' => 'Transisi status tidak valid dari ' . $order->status . ' ke ' . $newStatus
             ], 422);
