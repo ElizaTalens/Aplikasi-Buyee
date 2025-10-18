@@ -17,6 +17,11 @@ class ProductController extends Controller
         $categories = Category::all();
         $query = Product::with('category')->where('is_active', true);
         
+        // <-- ADD: jika link dari home mengirim ?category=..., samakan ke 'group'
+        if ($request->filled('category') && ! $request->has('group')) {
+            $request->merge(['group' => $request->query('category')]);
+        }
+
         // Cek apakah ini adalah permintaan API atau permintaan Web
         if ($request->expectsJson() || $request->is('api/*')) {
              // Jika API, panggil metode apiIndex untuk pemrosesan API

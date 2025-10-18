@@ -43,6 +43,18 @@
             <div class="border-t border-gray-100 pt-4">
               <div class="mb-3"><span class="text-sm font-semibold">Kategori</span></div>
               <div class="grid gap-2 text-sm">
+                @php
+                  // Aktif ketika tidak ada group di query string (menampilkan semua produk)
+                  $isAllActive = !request()->has('group') || request('group') === '' || request('group') === 'all';
+                @endphp
+
+                <!-- All Produk: hapus filter kategori tapi pertahankan query lain (mis. sort/min_price/max_price) -->
+                <a class="flex items-center justify-between rounded-lg px-3 py-2 transition-colors
+                   {{ $isAllActive ? 'bg-gray-100 font-bold text-gray-900' : 'border border-gray-200 hover:bg-gray-50' }}"
+                   href="{{ route('catalog', request()->except(['page','group'])) }}">
+                  <span>Semua Produk</span> <i class="fa-solid fa-chevron-right text-[10px] text-gray-400"></i>
+                </a>
+
                 @foreach ($categories as $category)
                   @php
                     $slug = str_replace('-fashion', '', $category->slug);
@@ -50,7 +62,7 @@
                   @endphp
                   <a class="flex items-center justify-between rounded-lg px-3 py-2 transition-colors
                      {{ $isActive ? 'bg-gray-100 font-bold text-gray-900' : 'border border-gray-200 hover:bg-gray-50' }}"
-                     href="{{ route('catalog', array_merge(request()->except('page'), ['group' => $slug])) }}">
+                     href="{{ route('catalog', array_merge(request()->except(['page','group']), ['group' => $slug])) }}">
                     <span>{{ $category->name }}</span> <i class="fa-solid fa-chevron-right text-[10px] text-gray-400"></i>
                   </a>
                 @endforeach
@@ -81,7 +93,7 @@
             </div>
             
             {{-- Hidden input & Tombol Terapkan --}}
-            <input type="hidden" name="group" value="{{ request('group') }}">
+            <input type="hidden" name="group" value="{{ request('group') ?? request('category') }}">
             <button type="submit" class="mt-6 w-full rounded-md bg-black py-2 text-sm font-semibold text-white hover:bg-gray-900">
               Terapkan Filter
             </button>

@@ -64,7 +64,7 @@
         <div id="cat-track" class="mt-5 flex gap-4 overflow-x-auto snap-x scroll-smooth" style="scrollbar-width: none; -ms-overflow-style: none;">
             <style>#cat-track::-webkit-scrollbar { display: none; }</style>
 
-            {{-- Kartu statis untuk "All Products" --}}
+            {{-- All Products --}}
             <a href="{{ route('catalog') }}" class="min-w-[210px] snap-start group rounded-xl border border-gray-200 bg-white p-4 text-center hover:shadow-card transition">
                 <div class="mx-auto mb-3 h-28 w-28 overflow-hidden rounded-lg bg-gray-50 ring-1 ring-gray-200">
                     <img src="{{ asset('images/carts.jpg') }}" alt="All Products" class="h-full w-full object-cover" loading="lazy" />
@@ -72,36 +72,23 @@
                 <div class="text-base font-semibold text-gray-700">All Products</div>
             </a>
 
-            {{-- Loop dinamis untuk setiap kategori dari database --}}
-            {{-- ASUMSI: $categories sudah di-passing dari controller --}}
-            @foreach ($categories as $category)
+            {{-- Dynamic categories --}}
+            @foreach ($categories ?? [] as $category)
                 @php
-                    $categoryImagePath = $category->image_url; 
-                    
-                    // Cek apakah path adalah URL eksternal atau path storage lokal
-                    if (filter_var($categoryImagePath, FILTER_VALIDATE_URL) || Str::startsWith($categoryImagePath, '//')) {
-                         $categoryImageUrl = $categoryImagePath;
-                    } elseif (isset($categoryImagePath)) {
-                         // Ini menangani path lokal: categories/makanan-minuman.jpg
-                         $categoryImageUrl = asset('storage/' . $categoryImagePath); 
-                    } else {
-                         // Fallback jika NULL
-                         $categoryImageUrl = asset('images/placeholder.jpg'); 
-                    }
-
                     $categorySlug = $category->slug ?? \Illuminate\Support\Str::slug($category->name);
+                    $categoryImagePath = $category->image_url;
+                    if ($categoryImagePath && (filter_var($categoryImagePath, FILTER_VALIDATE_URL) || \Illuminate\Support\Str::startsWith($categoryImagePath, '//'))) {
+                        $categoryImageUrl = $categoryImagePath;
+                    } elseif ($categoryImagePath) {
+                        $categoryImageUrl = asset('storage/' . $categoryImagePath);
+                    } else {
+                        $categoryImageUrl = asset('images/placeholder.jpg');
+                    }
                 @endphp
-                
-                <a href="{{ route('catalog', ['category' => $categorySlug]) }}" 
-                   class="min-w-[210px] snap-start group rounded-xl border border-gray-200 bg-white p-4 text-center hover:shadow-card transition">
-                    
+
+                <a href="{{ route('catalog', array_merge(request()->except(['page','group']), ['group' => $categorySlug])) }}" class="min-w-[210px] snap-start group rounded-xl border border-gray-200 bg-white p-4 text-center hover:shadow-card transition">
                     <div class="mx-auto mb-3 h-28 w-28 overflow-hidden rounded-lg bg-gray-50 ring-1 ring-gray-200">
-                        <img src="{{ $categoryImageUrl }}" 
-                             alt="{{ $category->name }}" 
-                             class="h-full w-full object-cover" 
-                             loading="lazy"
-                             onerror="this.onerror=null;this.src='{{ asset('images/placeholder.jpg') }}';" 
-                        />
+                        <img src="{{ $categoryImageUrl }}" alt="{{ $category->name }}" class="h-full w-full object-cover" loading="lazy" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.jpg') }}'">
                     </div>
                     <div class="text-base font-semibold text-gray-700">{{ $category->name }}</div>
                 </a>
