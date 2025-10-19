@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class IsAdminMiddleware
@@ -18,7 +19,7 @@ class IsAdminMiddleware
     {
         // Cek jika user sudah login
         if (!Auth::check()) {
-            \Log::warning('Admin middleware: User not authenticated', [
+            Log::warning('Admin middleware: User not authenticated', [
                 'url' => $request->url(),
                 'ip' => $request->ip()
             ]);
@@ -29,7 +30,7 @@ class IsAdminMiddleware
         
         // Cek jika perannya adalah 'admin'
         if ($user->role === 'admin') {
-            \Log::info('Admin middleware: Access granted', [
+            Log::info('Admin middleware: Access granted', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'url' => $request->url()
@@ -39,7 +40,7 @@ class IsAdminMiddleware
         }
 
         // Log akses yang ditolak
-        \Log::warning('Admin middleware: Access denied', [
+        Log::warning('Admin middleware: Access denied', [
             'user_id' => $user->id,
             'email' => $user->email,
             'role' => $user->role,

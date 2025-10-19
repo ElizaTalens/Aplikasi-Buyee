@@ -38,7 +38,7 @@ class LoginController extends Controller
             $user = $request->user();
             
             // Log untuk debugging
-            \Log::info('User login berhasil', [
+            Log::info('User login berhasil', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'role' => $user->role,
@@ -62,10 +62,10 @@ class LoginController extends Controller
 
             // Default redirect berdasarkan role
             if ($user->role === 'admin') {
-                \Log::info('Admin login - redirecting to dashboard', ['user_id' => $user->id]);
+                Log::info('Admin login - redirecting to dashboard', ['user_id' => $user->id]);
                 return redirect()->intended(route('admin.page.dashboard'));
             } else if ($user->role === 'user') {
-                \Log::info('User login - redirecting to home', ['user_id' => $user->id]);
+                Log::info('User login - redirecting to home', ['user_id' => $user->id]);
                 return redirect()->intended(route('home'));
             } else {
                 Auth::logout();

@@ -28,14 +28,14 @@ class WishlistController extends Controller
      */
     public function toggle(Request $request): JsonResponse
     {
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             return response()->json([
                 'message' => 'Unauthorized'
             ], 401);
         }
 
         $product_id = $request->input('product_id');
-        $user_id = auth()->id();
+        $user_id = Auth::id();
 
         // Cek apakah item sudah ada di wishlist
         $wishlist = Wishlist::where('user_id', $user_id)
