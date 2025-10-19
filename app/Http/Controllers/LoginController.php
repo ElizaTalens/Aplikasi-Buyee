@@ -4,16 +4,31 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
-use Illuminate\Support\Facades\Log; 
 
 class LoginController extends Controller
 {
     // tampilkan form login 
     public function showLoginForm(Request $request)
     {
-        if ($request->has('redirect')) {
-            session(['redirect_url' => $request->redirect]);
+        $redirect = $request->query('redirect');
+        if ($redirect) {
+            // ambil path dan tolak jika mengarah ke endpoint API/JSON atau route khusus yg hanya mengembalikan data
+            $path = parse_url($redirect, PHP_URL_PATH) ?? '';
+            $blockedPatterns = [
+                '#/api/#i',
+                '#/wishlist/count#i',
+                '#/.*\.json$#i',
+                '#/ajax/#i'
+            ];
+            $isBlocked = false;
+            foreach ($blockedPatterns as $p) {
+                if (preg_match($p, $path)) { $isBlocked = true; break; }
+            }
+            if (! $isBlocked) {
+                session(['redirect_url' => $redirect]);
+            } else {
+                session()->forget('redirect_url');
+            }
         }
         return view('pages.login');
     }
@@ -36,44 +51,27 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
             $user = $request->user();
-            
-            // Log untuk debugging
-            \Log::info('User login berhasil', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'role' => $user->role,
-                'intended_role' => $request->role
-            ]);
 
-            // Pastikan role user sesuai dengan role yang dipilih di form
-            if ($user->role !== $request->role) {
-                Auth::logout();
-                return back()->withErrors([
-                    'role' => 'Role yang dipilih tidak sesuai dengan akun Anda.',
-                ])->onlyInput('email', 'role');
-            }
-
-            // Cek redirect URL dari session
+            // Pastikan redirect aman sebelum dipakai
             if (session()->has('redirect_url')) {
                 $redirect = session('redirect_url');
-                session()->forget('redirect_url'); // Hapus dari session
+                $path = parse_url($redirect, PHP_URL_PATH) ?? '';
+                // ulangi cek block supaya tidak mengarahkan ke JSON/API
+                if (preg_match('#(/api/|/wishlist/count|\.json|/ajax/)#i', $path)) {
+                    $redirect = route('home');
+                }
+                session()->forget('redirect_url');
                 return redirect($redirect);
             }
 
-            // Default redirect berdasarkan role
+            // default redirect
             if ($user->role === 'admin') {
-                \Log::info('Admin login - redirecting to dashboard', ['user_id' => $user->id]);
                 return redirect()->intended(route('admin.page.dashboard'));
-            } else if ($user->role === 'user') {
-                \Log::info('User login - redirecting to home', ['user_id' => $user->id]);
-                return redirect()->intended(route('home'));
             } else {
-                Auth::logout();
-                return back()->withErrors([
-                    'role' => 'Role tidak valid.',
-                ])->onlyInput('email', 'role');
+                return redirect()->intended(route('home'));
             }
         }
+
         return back()->withErrors([
             'email' => 'Email, password, atau role tidak sesuai.',
         ])->onlyInput('email', 'role');
