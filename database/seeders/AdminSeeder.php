@@ -23,8 +23,4 @@ class AdminSeeder extends Seeder
             'updated_at' => now(),
         ]);
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> semua-halaman
