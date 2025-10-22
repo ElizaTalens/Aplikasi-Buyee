@@ -56,17 +56,17 @@ class LoginController extends Controller
             // Cek redirect URL dari session
             if (session()->has('redirect_url')) {
                 $redirect = session('redirect_url');
-                session()->forget('redirect_url'); // Hapus dari session
+                session()->forget('redirect_url'); 
                 return redirect($redirect);
             }
 
             // Default redirect berdasarkan role
             if ($user->role === 'admin') {
                 \Log::info('Admin login - redirecting to dashboard', ['user_id' => $user->id]);
-                return redirect()->intended(route('admin.page.dashboard'));
+                return redirect()->route('admin.page.dashboard');
             } else if ($user->role === 'user') {
                 \Log::info('User login - redirecting to home', ['user_id' => $user->id]);
-                return redirect()->intended(route('home'));
+                return redirect()->route('home');
             } else {
                 Auth::logout();
                 return back()->withErrors([

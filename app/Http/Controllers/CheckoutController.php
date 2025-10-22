@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Product; // Pastikan model Product di-import
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -17,100 +18,119 @@ class CheckoutController extends Controller
     {
         $cartItems = CartItem::with('product')
             ->where('user_id', Auth::id())
-            ->get();
+            ->get(); // [cite: 722-724]
 
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Keranjang Anda kosong.');
+            return redirect()->route('cart.index')->with('error', 'Keranjang Anda kosong.'); // [cite: 725-727]
         }
 
-        $subtotal = $cartItems->sum(fn($item) => $item->quantity * $item->product->price);
-        $total = $subtotal;
-        return view('pages.checkout', compact('cartItems', 'subtotal', 'total'));
+        $subtotal = $cartItems->sum(fn($item) => $item->quantity * $item->product->price); // [cite: 728]
+        $total = $subtotal; // [cite: 729]
+        return view('pages.checkout', compact('cartItems', 'subtotal', 'total')); // [cite: 730-731]
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'customer_email' => 'required|email|max:255',
-            'customer_phone' => 'required|string|max:20',
-            'shipping_address' => 'required|string',
-            'city' => 'required|string|max:100',
-            'province' => 'required|string|max:100',
-            'postal_code' => 'required|string|max:10',
-            'payment_method' => 'required|in:cod,transfer,qris',
-            'order_notes' => 'nullable|string|max:1000'
+            'customer_name' => 'required|string|max:255', // [cite: 735]
+            'customer_email' => 'required|email|max:255', // [cite: 736]
+            'customer_phone' => 'required|string|max:20', // [cite: 737]
+            'shipping_address' => 'required|string', // [cite: 738]
+            'city' => 'required|string|max:100', // [cite: 739]
+            'province' => 'required|string|max:100', // [cite: 740]
+            'postal_code' => 'required|string|max:10', // [cite: 741]
+            'payment_method' => 'required|in:cod,transfer,qris', // [cite: 742]
+            'order_notes' => 'nullable|string|max:1000' // [cite: 743]
         ]);
 
         try {
             $cartItems = CartItem::with('product')
                 ->where('user_id', Auth::id())
-                ->get();
+                ->get(); // [cite: 746-748]
 
             if ($cartItems->isEmpty()) {
                 if ($request->wantsJson()) {
                     return response()->json([
-                        'error' => 'Keranjang Anda kosong.'
-                    ], 422);
+                        'error' => 'Keranjang Anda kosong.' // [cite: 752]
+                    ], 422); // [cite: 753]
                 }
-                return redirect()->route('cart.index')->with('error', 'Keranjang Anda kosong.');
+                return redirect()->route('cart.index')->with('error', 'Keranjang Anda kosong.'); // [cite: 755]
             }
 
-            $subtotal = $cartItems->sum(fn($item) => $item->quantity * $item->product->price);
-            $total = $subtotal;
+            $subtotal = $cartItems->sum(fn($item) => $item->quantity * $item->product->price); // [cite: 757]
+            $total = $subtotal; // [cite: 758]
+
             $order = DB::transaction(function () use ($validated, $cartItems, $total) {
+                
+                // 1. BUAT ORDER BARU
                 $order = Order::create([
-                    'user_id' => Auth::id(),
-                    'customer_name' => $validated['customer_name'],
-                    'customer_email' => $validated['customer_email'],
-                    'customer_phone' => $validated['customer_phone'],
-                    'total' => $total,
-                    'status' => 'pending',
-                    'payment_method' => $validated['payment_method'],
-                    'order_notes' => $validated['order_notes'] ?? null,
-                    'address_text' => $validated['shipping_address'] . ', ' . 
-                                    $validated['city'] . ', ' . 
-                                    $validated['province'] . ' ' . 
-                                    $validated['postal_code']
+                    'user_id' => Auth::id(), // [cite: 761]
+                    'customer_name' => $validated['customer_name'], // [cite: 762]
+                    'customer_email' => $validated['customer_email'], // [cite: 763]
+                    'customer_phone' => $validated['customer_phone'], // [cite: 764]
+                    'total' => $total, // [cite: 765]
+                    'status' => 'pending', // [cite: 766]
+                    'payment_method' => $validated['payment_method'], // [cite: 767]
+                    'order_notes' => $validated['order_notes'] ?? null, // [cite: 768]
+                    'address_text' => $validated['shipping_address'] . ', ' .
+                                      $validated['city'] . ', ' .
+                                      $validated['province'] . ' ' .
+                                      $validated['postal_code'] // [cite: 769-772]
                 ]);
 
+                // 2. PROSES ITEM KERANJANG
                 foreach ($cartItems as $cartItem) {
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'product_id' => $cartItem->product_id,
-                        'price' => $cartItem->product->price,
-                        'qty' => $cartItem->quantity,
-                        'subtotal' => $cartItem->quantity * $cartItem->product->price
-                    ]);
-                }
+                    $product = $cartItem->product; 
 
-                CartItem::where('user_id', Auth::id())->delete();
+                    // --- VALIDASI DAN PENGURANGAN STOK DITAMBAHKAN DI SINI ---
+                    // Cek ketersediaan stok terakhir (Meskipun sudah dicek di keranjang, ini penting untuk transaksi)
+                    if ($product->stock_quantity < $cartItem->quantity) {
+                        // Throw exception akan memicu DB::rollBack()
+                        throw new \Exception("Stok produk '{$product->name}' tidak mencukupi ({$product->stock_quantity} tersedia).");
+                    }
+                    
+                    // Buat Order Item
+                    OrderItem::create([
+                        'order_id' => $order->id, // [cite: 776]
+                        'product_id' => $cartItem->product_id, // [cite: 777]
+                        'price' => $product->price, // [cite: 778]
+                        'qty' => $cartItem->quantity, // [cite: 779]
+                        'subtotal' => $cartItem->quantity * $product->price // [cite: 780]
+                    ]);
+                    
+                    // KURANGI STOK PRODUK
+                    $product->decrement('stock_quantity', $cartItem->quantity);
+                }
                 
+                // 3. HAPUS ITEM DARI KERANJANG
+                CartItem::where('user_id', Auth::id())->delete(); // [cite: 783]
+
                 return $order;
-            });
+            }); // [cite: 759, 785]
 
             if ($request->wantsJson()) {
                 return response()->json([
-                    'success' => true,
-                    'message' => 'Pesanan berhasil dibuat!',
-                    'order_id' => $order->id,
-                    'order_number' => 'ORD-' . str_pad($order->id, 6, '0', STR_PAD_LEFT),
-                    'redirect' => route('orders.index'),
-                    'payment_method' => $validated['payment_method'],
-                ]);
+                    'success' => true, // [cite: 788]
+                    'message' => 'Pesanan berhasil dibuat!', // [cite: 789]
+                    'order_id' => $order->id, // [cite: 790]
+                    'order_number' => 'ORD-' . str_pad($order->id, 6, '0', STR_PAD_LEFT), // [cite: 791]
+                    'redirect' => route('orders.index'), // [cite: 792]
+                    'payment_method' => $validated['payment_method'], // [cite: 793]
+                ]); // [cite: 787, 794]
             }
 
             return redirect()
-                ->route('orders.index')
-                ->with('success', 'Pesanan berhasil dibuat! Anda dapat melihat status pesanan di halaman ini.');
+                ->route('orders.index') // [cite: 797]
+                ->with('success', 'Pesanan berhasil dibuat! Anda dapat melihat status pesanan di halaman ini.'); // [cite: 798]
 
         } catch (\Exception $e) {
+            // Logika catch untuk JSON atau redirect back
             if ($request->wantsJson()) {
                 return response()->json([
-                    'error' => 'Terjadi kesalahan saat memproses pesanan.'
-                ], 500);
+                    'error' => $e->getMessage() // Mengembalikan pesan error (termasuk stok tidak cukup)
+                ], 500); // [cite: 801-803]
             }
-            return back()->with('error', 'Terjadi kesalahan saat memproses pesanan.');
+            return back()->with('error', 'Terjadi kesalahan saat memproses pesanan: ' . $e->getMessage()); // [cite: 805]
         }
     }
 }

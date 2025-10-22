@@ -85,7 +85,6 @@
 
         <form method="POST" action="{{ route('login.submit') }}" autocomplete="off">
             @csrf
-
             <input type="text" name="email" placeholder="Email" value="{{ old('email') }}" required>
             @error('email') <div class="error">{{ $message }}</div> @enderror
 

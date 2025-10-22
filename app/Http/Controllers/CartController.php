@@ -225,6 +225,6 @@ class CartController extends Controller
             return 0;
         }
         // Menjumlahkan total kuantitas, bukan hanya jumlah baris/produk
-        return CartItem::where('user_id', Auth::id())->sum('quantity');
+        return CartItem::where('user_id', Auth::id())-> count();
     }
 }
